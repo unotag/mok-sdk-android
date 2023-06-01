@@ -1,3 +1,4 @@
+import com.unotag.mokone.core.MokSDKConstants
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -23,13 +24,24 @@ class MokApiCallTask(
         GET,
         POST,
         PUT,
-        DELETE
+        DELETE,
+        PATCH
     }
 
-    fun performApiCall(urlString: String, httpMethod: HttpMethod, requestBody: JSONObject? = null) {
+    enum class MokRequestMethod {
+        READ,
+        WRITE
+    }
+
+    fun performApiCall(
+        urlString: String,
+        httpMethod: HttpMethod,
+        mokRequestMethod: MokRequestMethod,
+        requestBody: JSONObject? = null
+    ) {
         executorService.submit {
             try {
-                val response = makeApiCall(urlString, httpMethod, requestBody)
+                val response = makeApiCall(urlString, httpMethod, mokRequestMethod, requestBody)
                 callback.onSuccess(response)
             } catch (e: Exception) {
                 callback.onError(e)
@@ -37,11 +49,22 @@ class MokApiCallTask(
         }
     }
 
-    private fun makeApiCall(urlString: String, httpMethod: HttpMethod, requestBody: JSONObject?): JSONObject {
+    private fun makeApiCall(
+        urlString: String,
+        httpMethod: HttpMethod,
+        mokRequestMethod: MokRequestMethod,
+        requestBody: JSONObject?
+    ): JSONObject {
         val url = URL(urlString)
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = httpMethod.name
         connection.setRequestProperty("Content-Type", "application/json")
+
+        if (mokRequestMethod == MokRequestMethod.READ) {
+            connection.setRequestProperty("Authorization", MokSDKConstants.READ_KEY)
+        } else {
+            connection.setRequestProperty("Authorization", MokSDKConstants.WRITE_KEY)
+        }
 
         if (requestBody != null) {
             val requestBodyBytes = requestBody.toString().toByteArray(StandardCharsets.UTF_8)

@@ -1,5 +1,6 @@
 package com.unotag.mokone.pushNotification.fcm
 
+import MokLogger
 import android.Manifest
 import androidx.activity.result.ActivityResultLauncher
 
@@ -34,8 +35,11 @@ object PushNotificationPermissionHandler {
 
         if (isPushNotificationPermissionGranted(context)) {
             callback.onPermissionGranted()
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "Push Notification Permission Granted")
         } else {
             requestPushNotificationPermission(context, callback)
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "Push Notification Permission Granted")
+
         }
     }
 

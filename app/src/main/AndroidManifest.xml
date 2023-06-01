@@ -7,10 +7,10 @@
 
     <!-- Required for push notifications -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
 
     <application
+        android:name=".ExampleApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -29,6 +29,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="MOK_READ_KEY"
+            android:value="r_iOjxKAbysiY4dRAecAnNO" />
+
+        <meta-data
+            android:name="MOK_WRITE_KEY"
+            android:value="w_lP7D_ESqWu8ijfrz88j5D" />
+
+        <service
+            android:name="com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
