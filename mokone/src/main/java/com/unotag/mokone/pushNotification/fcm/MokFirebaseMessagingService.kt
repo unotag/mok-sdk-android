@@ -16,6 +16,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.R
+import com.unotag.mokone.pushNotification.NotificationRenderer
 
 
 class MokFirebaseMessagingService : FirebaseMessagingService() {
@@ -134,7 +135,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val channelId = "1"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            //.setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setSmallIcon(NotificationRenderer.getSmallNotificationIcon())
             .setContentTitle("title")
             .setContentText(messageBody)
             .setAutoCancel(true)

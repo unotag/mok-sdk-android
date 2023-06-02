@@ -5,9 +5,7 @@ import MokLogger
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.core.MokSDKConstants
@@ -18,14 +16,22 @@ class MokSDK private constructor(private val context: Context) : MokApiCallTask.
 
     companion object {
         private var instance: MokSDK? = null
-        // Get the singleton instance of com.unotag.mokone.MokSDK
+        private var appContext: Context? = null
+
+        // Get the singleton instance of MokSDK
         fun getInstance(context: Context): MokSDK {
             if (instance == null) {
                 instance = MokSDK(context.applicationContext)
+                appContext = context.applicationContext
             }
             return instance as MokSDK
         }
+
+        fun getAppContext(): Context {
+            return appContext ?: throw IllegalStateException("MokSDK has not been initialized. Call getInstance() first.")
+        }
     }
+
 
     fun initMokSDK() {
         val bundle: Bundle? = getApiKeyFromManifest(context)
@@ -81,7 +87,6 @@ class MokSDK private constructor(private val context: Context) : MokApiCallTask.
     }
 
 
-
     // Implement the MokApiCallTask.ApiCallback interface methods
     override fun onSuccess(response: JSONObject) {
         MokLogger.log(MokLogger.LogLevel.DEBUG, response.toString())
@@ -91,18 +96,19 @@ class MokSDK private constructor(private val context: Context) : MokApiCallTask.
         MokLogger.log(MokLogger.LogLevel.ERROR, error.message.toString())
     }
 
-    fun getFCMToken(){
-        Firebase.messaging.token.addOnCompleteListener(
-            OnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    MokLogger.log(MokLogger.LogLevel.DEBUG, "Fetching FCM registration token failed", task.exception)
-                    return@OnCompleteListener
-                }
-                // Get new FCM registration token
+    fun getFCMToken(callback: (String?) -> Unit) {
+        Firebase.messaging.token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
                 val token = task.result
-                // Log and toast
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "token: $token")
-            },
-        )
+                callback(token)
+            } else {
+                MokLogger.log(
+                    MokLogger.LogLevel.DEBUG,
+                    "Fetching FCM registration token failed",
+                    task.exception
+                )
+                callback(null)
+            }
+        }
     }
 }

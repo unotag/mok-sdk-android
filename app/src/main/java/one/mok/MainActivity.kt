@@ -13,6 +13,8 @@ import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
+    lateinit var mFcmToken : String
+
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,15 +44,31 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
-        val jsonBody = JSONObject()
-        jsonBody.put("name", "sohel test")
-        jsonBody.put("deviceId", "test_id_will_add_soon_in_code_:)")
-
-
         val mokSDK = MokSDK.getInstance(applicationContext)
-        mokSDK.getFCMToken()
+
+
+
+
+        mokSDK.getFCMToken { token ->
+            // Use the token here
+            if (token != null) {
+                // Token retrieval successful, do something with the token
+                mFcmToken = token
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "token: $token")
+
+                val jsonBody = JSONObject()
+                jsonBody.put("name", "")
+                jsonBody.put("fcm", mFcmToken)
+
+                mokSDK.triggerWorkflow("63185f8b-5390-4091-a4ef-a31fab165dae", jsonBody)
+            } else {
+                // Token retrieval failed
+                // Handle the failure case
+            }
+        }
+
+
+
 
     }
-
 }
