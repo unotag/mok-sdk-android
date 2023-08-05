@@ -1,0 +1,88 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+
+    def sourceDirs
+    if (plugins.hasPlugin("com.android.library")) {
+        // For android libraries
+        sourceDirs = android.sourceSets.main.java.srcDirs + android.sourceSets.main.kotlin.srcDirs
+    } else {
+        // For pure kotlin libraries
+        sourceDirs = sourceSets.main.java.srcDirs + sourceSets.main.kotlin.srcDirs
+    }
+
+    from sourceDirs
+}
+
+
+artifacts {
+    archives androidSourcesJar
+}
+
+group = 'com.unotags'
+version = '0.0.1'
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId = 'com.unotags'
+                artifactId = 'mok-sdk-android'
+                version = android.defaultConfig.versionName
+                if (project.plugins.findPlugin("com.android.library")) {
+                    from components.release
+                } else {
+                    from components.java
+                }
+
+                artifact androidSourcesJar
+                //artifact javadocJar
+                // Configure the generated POM file
+                pom {
+                    name = 'mok-sdk-android'
+                    description = 'The library provides a comprehensive set of features and APIs that allow developers to seamlessly integrate push notifications into their Android applications. With our SDK, you can effortlessly send personalized and targeted notifications to your users, keeping them informed and engaged'
+                    url = 'https://github.com/unotag/mok-sdk-android'
+                    inceptionYear = '2023'
+
+
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'sohelyadav'
+                            name = 'sohel yadav'
+                            email = 'sohelyadav@gmail.com'
+                        }
+                    }
+
+                    // Version control info
+                    scm {
+                        connection = 'scm:git:https://github.com/unotag/mok-sdk-android.git'
+                        developerConnection = 'scm:git:ssh://github.com:unotag/mok-sdk-android.git'
+                        url = 'https://github.com/unotag/mok-sdk-android'
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+
+signing {
+//    useInMemoryPgpKeys(
+//            rootProject.ext["signing.keyId"],
+//            rootProject.ext["signing.key"],
+//            rootProject.ext["signing.password"]
+//    )
+//    sign publishing.publications
+   // useGpgCmd()
+    sign publishing.publications
+}

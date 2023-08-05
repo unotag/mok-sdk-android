@@ -47,3 +47,4 @@ dependencies {
     // Firebase Cloud Messaging (Kotlin)
     implementation("com.google.firebase:firebase-messaging-ktx")
 }
+

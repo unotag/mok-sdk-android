@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
                         // Permission granted logic
                         // Handle the scenario when permission is granted
                     }
-
                     override fun onPermissionDenied() {
                         // Permission denied logic
                         // Handle the scenario when permission is denied
@@ -45,8 +44,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         val mokSDK = MokSDK.getInstance(applicationContext)
-
-
 
 
         mokSDK.getFCMToken { token ->
