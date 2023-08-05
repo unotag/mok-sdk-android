@@ -1,5 +1,6 @@
 package com.unotag.mokone.pushNotification.fcm
 
+import InAppMessageData
 import MokLogger
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,13 +11,18 @@ import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.room.Room
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.R
+import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.pushNotification.NotificationRenderer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MokFirebaseMessagingService : FirebaseMessagingService() {
@@ -38,7 +44,6 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
         // [END_EXCLUDE]
 
-        // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         MokLogger.log(MokLogger.LogLevel.DEBUG, "From: ${remoteMessage.from}")
 
@@ -46,11 +51,18 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
 
+            if (remoteMessage.data.containsKey("notification_type") &&
+                remoteMessage.data["notification_type"] == "in_app_message"
+            ) {
+                val notificationData = remoteMessage.data
+                handleInAppNotification(notificationData)
+            }
+
             // Check if data needs to be processed by long running job
-            if (isLongRunningJob()) {
-                // For long-running tasks (10 seconds or more) use WorkManager.
-                scheduleJob()
-            } else {
+            //if (isLongRunningJob()) {
+            // For long-running tasks (10 seconds or more) use WorkManager.
+            //   scheduleJob()
+            else {
                 // Handle message within 10 seconds
                 handleNow()
             }
@@ -158,4 +170,19 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val notificationId = 0
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
+
+
+    private fun handleInAppNotification(data: Map<String, String>) {
+        val inAppMessageData = InAppMessageData.fromMap(data)
+
+        val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
+        val scope = CoroutineScope(Dispatchers.IO)
+
+        scope.launch {
+            val inAppMessageDao = db.inAppMessageDao()
+            val inAppMessageEntity = inAppMessageData.toEntity()
+            inAppMessageDao.insert(inAppMessageEntity)
+        }
+    }
+
 }

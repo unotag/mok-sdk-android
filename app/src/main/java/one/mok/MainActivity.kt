@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 jsonBody.put("name", "")
                 jsonBody.put("fcm", mFcmToken)
 
-                mokSDK.triggerWorkflow("63185f8b-5390-4091-a4ef-a31fab165dae", jsonBody)
+                //mokSDK.triggerWorkflow("63185f8b-5390-4091-a4ef-a31fab165dae", jsonBody)
             } else {
                 // Token retrieval failed
                 // Handle the failure case
