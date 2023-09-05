@@ -1,4 +1,5 @@
 import com.unotag.mokone.core.MokSDKConstants
+import com.unotag.mokone.utils.MokLogger
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -9,14 +10,18 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MokApiCallTask(
-    private val callback: ApiCallback
-) {
+class MokApiCallTask() {
 
-    interface ApiCallback {
-        fun onSuccess(response: JSONObject)
-        fun onError(error: Exception)
+//    sealed class ApiResult {
+//        data class Success(val response: JSONObject) : ApiResult()
+//        data class Error(val exception: Exception) : ApiResult()
+//    }
+
+    abstract class ApiResult {
+        class Success(val response: JSONObject) : ApiResult()
+        class Error(val exception: Exception) : ApiResult()
     }
+
 
     private val executorService: ExecutorService = Executors.newSingleThreadExecutor()
 
@@ -37,14 +42,25 @@ class MokApiCallTask(
         urlString: String,
         httpMethod: HttpMethod,
         mokRequestMethod: MokRequestMethod,
-        requestBody: JSONObject? = null
+        requestBody: JSONObject? = null,
+        callback: (ApiResult) -> Unit
     ) {
         executorService.submit {
+            MokLogger.log(
+                MokLogger.LogLevel.DEBUG,
+                "Is Development Evn : ${MokSDKConstants.IS_DEVELOPMENT_ENV}"
+            )
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "url : $urlString")
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "httpMethod : $httpMethod")
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "mokRequestMethod type : $mokRequestMethod")
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "requestBody : ${requestBody.toString()}")
             try {
                 val response = makeApiCall(urlString, httpMethod, mokRequestMethod, requestBody)
-                callback.onSuccess(response)
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "response : $response")
+                callback(ApiResult.Success(response))
             } catch (e: Exception) {
-                callback.onError(e)
+                MokLogger.log(MokLogger.LogLevel.ERROR, "performApiCall error : $e")
+                callback(ApiResult.Error(e))
             }
         }
     }
@@ -59,6 +75,9 @@ class MokApiCallTask(
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = httpMethod.name
         connection.setRequestProperty("Content-Type", "application/json")
+
+        MokLogger.log(MokLogger.LogLevel.DEBUG, "Read key value: ${MokSDKConstants.READ_KEY}")
+        MokLogger.log(MokLogger.LogLevel.DEBUG, "Write key value: ${MokSDKConstants.WRITE_KEY}")
 
         if (mokRequestMethod == MokRequestMethod.READ) {
             connection.setRequestProperty("Authorization", MokSDKConstants.READ_KEY)

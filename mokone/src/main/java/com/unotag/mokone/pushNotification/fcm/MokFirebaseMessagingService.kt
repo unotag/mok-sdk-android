@@ -1,23 +1,18 @@
 package com.unotag.mokone.pushNotification.fcm
 
 import InAppMessageData
-import MokLogger
+import com.unotag.mokone.utils.MokLogger
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.room.Room
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.google.firebase.messaging.ktx.messaging
-import com.unotag.mokone.R
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import kotlinx.coroutines.CoroutineScope
@@ -56,22 +51,24 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             ) {
                 val notificationData = remoteMessage.data
                 handleInAppNotification(notificationData)
+            }else{
+                sendNotification(remoteMessage)
             }
 
             // Check if data needs to be processed by long running job
             //if (isLongRunningJob()) {
             // For long-running tasks (10 seconds or more) use WorkManager.
             //   scheduleJob()
-            else {
-                // Handle message within 10 seconds
-                handleNow()
-            }
+//            else {
+//                // Handle message within 10 seconds
+//                handleNow()
+//            }
         }
 
         // Check if message contains a notification payload.
         remoteMessage.notification?.let {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message Notification Body: ${it.body}")
-            it.body?.let { body -> sendNotification(body) }
+            it.body?.let { body -> sendNotification(remoteMessage) }
         }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
@@ -112,6 +109,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
      */
     private fun handleNow() {
         MokLogger.log(MokLogger.LogLevel.DEBUG, "Short lived task is done.")
+     //   sendNotification()
     }
 
     /**
@@ -132,7 +130,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
      *
      * @param messageBody FCM message body received.
      */
-    private fun sendNotification(messageBody: String) {
+    private fun sendNotification(remoteMessage: RemoteMessage) {
         val requestCode = 0
         val launchIntent =
             applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
@@ -149,7 +147,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(NotificationRenderer.getSmallNotificationIcon())
             .setContentTitle("title")
-            .setContentText(messageBody)
+            .setContentText(remoteMessage.data["body"])
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)

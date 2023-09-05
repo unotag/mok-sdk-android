@@ -1,110 +1,93 @@
 package com.unotag.mokone.pushNotification.fcm
 
-import MokLogger
-import android.Manifest
-import androidx.activity.result.ActivityResultLauncher
-
-import android.content.Context
+import com.unotag.mokone.utils.MokLogger
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
-import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.PermissionChecker
-import androidx.fragment.app.FragmentActivity
+import androidx.core.content.ContextCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-interface PushNotificationPermissionCallback {
-    fun onPermissionGranted()
-    fun onPermissionDenied()
-}
 
-object PushNotificationPermissionHandler {
-    private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 100
+class PushNotificationPermissionHandler(private val activity: AppCompatActivity) {
 
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+    private var permissionLauncher: ActivityResultLauncher<String>? = null
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun requestPermission(
-        context: Context,
-        callback: PushNotificationPermissionCallback,
-        requestPermissionLauncher: ActivityResultLauncher<String>
-    ) {
-        this.requestPermissionLauncher = requestPermissionLauncher
-
-        if (isPushNotificationPermissionGranted(context)) {
-            callback.onPermissionGranted()
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "Push Notification Permission Granted")
-        } else {
-            requestPushNotificationPermission(context, callback)
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "Push Notification Permission Granted")
-
-        }
+    init {
+        setupPermissionLauncher()
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun isPushNotificationPermissionGranted(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PermissionChecker.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PermissionChecker.PERMISSION_GRANTED
-        } else {
-            // Handle the case for devices with SDK_INT < M (e.g., Android versions prior to Marshmallow)
-            false
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun requestPushNotificationPermission(
-        context: Context,
-        callback: PushNotificationPermissionCallback
-    ) {
-        if (context is FragmentActivity) {
-            val activity = context as FragmentActivity
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    activity,
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
-            ) {
-                // Show rationale or explanation for permission
-                // This is optional and can be customized based on your app's requirements
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    private fun setupPermissionLauncher() {
+        permissionLauncher =
+            activity.registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    // Permission granted
+                    // You can perform actions here when the permission is granted
+                    MokLogger.log(MokLogger.LogLevel.INFO, "Notification permission granted")
+                } else {
+                    // Permission denied
+                    MokLogger.log(MokLogger.LogLevel.DEBUG, "Notification permission denied")
+                    //showPermissionRationale()
                 }
             }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun requestPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            // Permission is granted at install time on older devices
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "Permission is granted at install time on older devices")
+            return
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                activity,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // Permission is already granted
+            MokLogger.log(MokLogger.LogLevel.INFO, "Permission is already granted")
+            return
+        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, android.Manifest.permission.POST_NOTIFICATIONS)) {
+            // Show rationale if needed
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "Notification permission permanently denied")
+            showPermissionRationale()
         } else {
-            // Handle if the context is not a FragmentActivity
-            callback.onPermissionDenied()
+            // Request permission
+            MokLogger.log(MokLogger.LogLevel.DEBUG, "Requesting permission")
+            permissionLauncher?.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
-    fun handlePermissionRequestResult(
-        requestCode: Int,
-        grantResults: IntArray,
-        callback: PushNotificationPermissionCallback
-    ) {
-        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                callback.onPermissionGranted()
-            } else {
-                callback.onPermissionDenied()
+    private fun showPermissionRationale() {
+        MaterialAlertDialogBuilder(activity)
+            .setTitle("Permission Required")
+            .setMessage("This app requires notification permission. Please allow the permission in the app settings.")
+            .setPositiveButton("Go to Settings") { _, _ ->
+                openNotificationSettings()
             }
-        }
+            .setNegativeButton("Cancel") { _, _ ->
+                // Handle cancellation
+            }
+            .show()
     }
 
-    fun openNotificationSettings(context: Context) {
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+    private fun openNotificationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = Uri.parse("package:${activity.packageName}")
+            activity.startActivity(intent)
         } else {
             // Handle the case for devices with SDK_INT < M (e.g., Android versions prior to Marshmallow)
             null
         }
-
-        intent?.let {
-            context.startActivity(intent)
-        }
     }
 }
+

@@ -22,7 +22,7 @@ artifacts {
 }
 
 group = 'com.unotags'
-version = '0.0.1'
+version = '0.0.10'
 
 afterEvaluate {
     publishing {
@@ -86,3 +86,5 @@ signing {
    // useGpgCmd()
     sign publishing.publications
 }
+//command to publish
+// ./gradlew publishToSonatype closeSonatypeStagingRepository
