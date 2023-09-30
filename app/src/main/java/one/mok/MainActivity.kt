@@ -1,9 +1,13 @@
 package one.mok
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import com.unotag.mokone.utils.MokLogger
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.TextView
+import android.widget.Toast
 import com.unotag.mokone.MokSDK
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import one.mok.databinding.ActivityMainBinding
@@ -21,44 +25,73 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        pushNotificationPermissionHandler = PushNotificationPermissionHandler(this)
+        getFcmToken()
+        pushNotificationPermissionHandler = PushNotificationPermissionHandler(
+            applicationContext, this
+        )
 
         binding.notificationPermissionBtn.setOnClickListener {
-            // Request the permission using the initialized requestPermissionLauncher
-            if (Build.VERSION.SDK_INT >= 33) {
-                pushNotificationPermissionHandler.requestPermission()
-            } else {
-
-            }
+            pushNotificationPermissionHandler.requestPermission()
         }
 
-//        binding.notificationPermissionBtn.setOnClickListener {
-//        }
+        binding.openNotificationSettingsBtn.setOnClickListener {
+            pushNotificationPermissionHandler.openNotificationSettings()
+        }
 
+        binding.fcmTokenValue.setOnClickListener {
+            copyTextToClipboard(binding.fcmTokenValue)
+        }
     }
 
-    private fun getFcmToken(){
+    private fun copyTextToClipboard(textToCopy: TextView) {
+        val text = textToCopy.text.toString()
+        val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipData = ClipData.newPlainText("Copied Text", text)
+        clipboardManager.setPrimaryClip(clipData)
+        showToast("Text copied to clipboard")
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setNotificationPermissionStatus()
+    }
+
+
+    private fun setNotificationPermissionStatus() {
+        var isGranted = pushNotificationPermissionHandler.isNotificationPermissionGranted()
+        binding.notificationSettingsStatus.text =
+            if (isGranted) "Granted" else "Denied"
+
+        var textColor =
+            if (isGranted) resources.getColor(R.color.colorSuccess) else resources.getColor(R.color.colorError)
+
+        binding.notificationSettingsStatus.setTextColor(textColor)
+    }
+
+    private fun getFcmToken() {
         val mokSDK = MokSDK.getInstance(applicationContext)
-        mokSDK.getFCMToken { token ->
-            // Use the token here
+        mokSDK.getFCMToken { token, error ->
             if (token != null) {
-                // Token retrieval successful, do something with the token
-              //  return token
+                binding.fcmTokenValue.text = token
 
                 // mokSDK.triggerWorkflow("63185f8b-5390-4091-a4ef-a31fab165dae", jsonBody)
-
+                //-   updateUser(token)
             } else {
-                // Token retrieval failed
-                // Handle the failure case
+                binding.fcmTokenValue.text = error
+
             }
         }
     }
 
-    private fun updateUser() {
+    private fun updateUser(fcmToken: String?) {
         val mokSDK = MokSDK.getInstance(applicationContext)
         val jsonBody = JSONObject()
         jsonBody.put("name", "rra_test_user")
-        jsonBody.put("fcm", "N/A")
+        jsonBody.put("fcm_registration_token", fcmToken ?: "N/A")
         mokSDK.updateUser("TEST_RR_KABLE_001", jsonBody) { success, errorMessage ->
             if (success != null) {
                 // API call was successful, do something

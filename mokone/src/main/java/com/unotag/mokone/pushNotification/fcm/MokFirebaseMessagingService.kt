@@ -149,6 +149,8 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             .setContentTitle("title")
             .setContentText(remoteMessage.data["body"])
             .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
 
@@ -159,8 +161,8 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Channel human readable title",
-                NotificationManager.IMPORTANCE_DEFAULT,
+                "Default",
+                NotificationManager.IMPORTANCE_HIGH,
             )
             notificationManager.createNotificationChannel(channel)
         }
