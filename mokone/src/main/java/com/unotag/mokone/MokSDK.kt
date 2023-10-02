@@ -42,8 +42,8 @@ class MokSDK private constructor(private val context: Context) {
     }
 
 
-    fun initMokSDK(isDevelopmentEvn : Boolean) {
-        MokSDKConstants.IS_DEVELOPMENT_ENV = isDevelopmentEvn
+    fun initMokSDK(isProductionEvn : Boolean) {
+        MokSDKConstants.IS_PRODUCTION_ENV = isProductionEvn
         val bundle: Bundle? = getApiKeyFromManifest(context)
         if (bundle != null) {
             val readKey = bundle.getString("MOK_READ_KEY")
@@ -211,19 +211,19 @@ class MokSDK private constructor(private val context: Context) {
     }
 
 
-    fun getFCMToken(callback: (String?) -> Unit) {
+    fun getFCMToken(callback: (String?, String?) -> Unit) {
         Firebase.messaging.token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "FCM token: $token")
-                callback(token)
+                callback(token, null)
             } else {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
                     "Fetching FCM registration token failed",
                     task.exception
                 )
-                callback(null)
+                callback(null,task.exception?.localizedMessage)
             }
         }
     }

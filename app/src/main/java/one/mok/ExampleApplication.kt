@@ -9,7 +9,7 @@ class ExampleApplication : Application() {
         super.onCreate()
 
         val mokSDK = MokSDK.getInstance(applicationContext)
-        mokSDK.initMokSDK(isDevelopmentEvn = false)
+        mokSDK.initMokSDK(isProductionEvn = false)
         MokLogger.setLogLevel(MokLogger.LogLevel.DEBUG)
     }
 }

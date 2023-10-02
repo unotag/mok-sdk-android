@@ -22,7 +22,6 @@ class MokApiCallTask() {
         class Error(val exception: Exception) : ApiResult()
     }
 
-
     private val executorService: ExecutorService = Executors.newSingleThreadExecutor()
 
     enum class HttpMethod {
@@ -48,7 +47,7 @@ class MokApiCallTask() {
         executorService.submit {
             MokLogger.log(
                 MokLogger.LogLevel.DEBUG,
-                "Is Development Evn : ${MokSDKConstants.IS_DEVELOPMENT_ENV}"
+                "IS_PRODUCTION_ENV : ${MokSDKConstants.IS_PRODUCTION_ENV}"
             )
             MokLogger.log(MokLogger.LogLevel.DEBUG, "url : $urlString")
             MokLogger.log(MokLogger.LogLevel.DEBUG, "httpMethod : $httpMethod")

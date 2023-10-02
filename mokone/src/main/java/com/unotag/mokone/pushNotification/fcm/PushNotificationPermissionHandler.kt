@@ -1,93 +1,108 @@
 package com.unotag.mokone.pushNotification.fcm
 
+import android.app.Activity
+import android.content.Context
 import com.unotag.mokone.utils.MokLogger
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 
-class PushNotificationPermissionHandler(private val activity: AppCompatActivity) {
+class PushNotificationPermissionHandler(
+    private val mContext: Context,
+    private val mActivity: Activity
+) {
 
-    private var permissionLauncher: ActivityResultLauncher<String>? = null
-
-    init {
-        setupPermissionLauncher()
-    }
-
-    private fun setupPermissionLauncher() {
-        permissionLauncher =
-            activity.registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                if (isGranted) {
-                    // Permission granted
-                    // You can perform actions here when the permission is granted
-                    MokLogger.log(MokLogger.LogLevel.INFO, "Notification permission granted")
-                } else {
-                    // Permission denied
-                    MokLogger.log(MokLogger.LogLevel.DEBUG, "Notification permission denied")
-                    //showPermissionRationale()
-                }
-            }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun requestPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Permission is granted at install time on older devices
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "Permission is granted at install time on older devices")
+            MokLogger.log(
+                MokLogger.LogLevel.DEBUG,
+                "Permission is granted at install time on older devices"
+            )
             return
         }
 
         if (ContextCompat.checkSelfPermission(
-                activity,
+                mContext,
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             // Permission is already granted
             MokLogger.log(MokLogger.LogLevel.INFO, "Permission is already granted")
             return
+        } else {
+            MokLogger.log(MokLogger.LogLevel.INFO, "Permission is denied")
         }
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity, android.Manifest.permission.POST_NOTIFICATIONS)) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                mActivity,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+        ) {
             // Show rationale if needed
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Notification permission permanently denied")
             showPermissionRationale()
         } else {
             // Request permission
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Requesting permission")
-            permissionLauncher?.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            ActivityCompat.requestPermissions(
+                mActivity,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101
+            )
+
+            //permissionLauncher!!.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
     private fun showPermissionRationale() {
-        MaterialAlertDialogBuilder(activity)
-            .setTitle("Permission Required")
-            .setMessage("This app requires notification permission. Please allow the permission in the app settings.")
-            .setPositiveButton("Go to Settings") { _, _ ->
-                openNotificationSettings()
-            }
-            .setNegativeButton("Cancel") { _, _ ->
-                // Handle cancellation
-            }
-            .show()
+        val builder = AlertDialog.Builder(mActivity)
+
+        builder.setTitle("Permission Required")
+        builder.setMessage("This app requires notification permission. Please allow the permission in the app settings.")
+
+        builder.setPositiveButton("Go to Settings") { dialog, which ->
+            openNotificationSettings()
+        }
+
+        builder.setNegativeButton("Cancel") { dialog, which ->
+            // Handle Cancel button click
+            // You can add your logic here
+        }
+        val dialog: AlertDialog = builder.create()
+        dialog.show()
     }
 
-    private fun openNotificationSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            intent.data = Uri.parse("package:${activity.packageName}")
-            activity.startActivity(intent)
+
+    fun openNotificationSettings() {
+        val intent = Intent()
+        intent.action = "android.settings.APP_NOTIFICATION_SETTINGS"
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        // for Android 5-7
+        intent.putExtra("app_package", mContext.packageName)
+        intent.putExtra("app_uid", mContext.applicationInfo.uid)
+
+        // for Android 8 and above
+        intent.putExtra("android.provider.extra.APP_PACKAGE", mContext.packageName)
+        mContext.startActivity(intent)
+    }
+
+    fun isNotificationPermissionGranted(): Boolean {
+        return if (ContextCompat.checkSelfPermission(
+                mContext,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            MokLogger.log(MokLogger.LogLevel.INFO, "Permission is already granted")
+            true
         } else {
-            // Handle the case for devices with SDK_INT < M (e.g., Android versions prior to Marshmallow)
-            null
+            false
         }
     }
+
 }
 
