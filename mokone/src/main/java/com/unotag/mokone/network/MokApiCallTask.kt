@@ -1,3 +1,5 @@
+package com.unotag.mokone.network
+
 import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.utils.MokLogger
 import org.json.JSONObject
@@ -12,10 +14,6 @@ import java.util.concurrent.Executors
 
 class MokApiCallTask() {
 
-//    sealed class ApiResult {
-//        data class Success(val response: JSONObject) : ApiResult()
-//        data class Error(val exception: Exception) : ApiResult()
-//    }
 
     abstract class ApiResult {
         class Success(val response: JSONObject) : ApiResult()
@@ -25,16 +23,11 @@ class MokApiCallTask() {
     private val executorService: ExecutorService = Executors.newSingleThreadExecutor()
 
     enum class HttpMethod {
-        GET,
-        POST,
-        PUT,
-        DELETE,
-        PATCH
+        GET, POST, PUT, DELETE, PATCH
     }
 
     enum class MokRequestMethod {
-        READ,
-        WRITE
+        READ, WRITE
     }
 
     fun performApiCall(
@@ -45,14 +38,22 @@ class MokApiCallTask() {
         callback: (ApiResult) -> Unit
     ) {
         executorService.submit {
-            MokLogger.log(
-                MokLogger.LogLevel.DEBUG,
-                "IS_PRODUCTION_ENV : ${MokSDKConstants.IS_PRODUCTION_ENV}"
-            )
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "url : $urlString")
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "httpMethod : $httpMethod")
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "mokRequestMethod type : $mokRequestMethod")
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "requestBody : ${requestBody.toString()}")
+            val logMessage = """
+|------------------- Mok SDK Request Configuration -------------------
+|
+| Read key value: ${MokSDKConstants.READ_KEY}
+| Write key value: ${MokSDKConstants.WRITE_KEY}
+| IS_PRODUCTION_ENV: ${MokSDKConstants.IS_PRODUCTION_ENV}
+| URL: $urlString
+| HTTP Method: $httpMethod
+| Mok Request Method Type: $mokRequestMethod
+| Request Body: ${requestBody.toString()}
+| 
+|----------------------------------------------------------------------
+""".trimMargin()
+
+            MokLogger.log(MokLogger.LogLevel.INFO, logMessage)
+
             try {
                 val response = makeApiCall(urlString, httpMethod, mokRequestMethod, requestBody)
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "response : $response")
@@ -74,9 +75,6 @@ class MokApiCallTask() {
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = httpMethod.name
         connection.setRequestProperty("Content-Type", "application/json")
-
-        MokLogger.log(MokLogger.LogLevel.DEBUG, "Read key value: ${MokSDKConstants.READ_KEY}")
-        MokLogger.log(MokLogger.LogLevel.DEBUG, "Write key value: ${MokSDKConstants.WRITE_KEY}")
 
         if (mokRequestMethod == MokRequestMethod.READ) {
             connection.setRequestProperty("Authorization", MokSDKConstants.READ_KEY)

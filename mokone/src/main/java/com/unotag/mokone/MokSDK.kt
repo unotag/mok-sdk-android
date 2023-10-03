@@ -1,7 +1,7 @@
 package com.unotag.mokone
 
-import MokApiCallTask
-import com.unotag.mokone.utils.MokLogger
+import InAppMessageData
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -14,13 +14,18 @@ import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.db.InAppMessageEntity
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
+import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
+import com.unotag.mokone.utils.MokLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import org.json.JSONObject
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class MokSDK private constructor(private val context: Context) {
+
+    private lateinit var pushNotificationPermissionHandler: PushNotificationPermissionHandler
 
     companion object {
         private var instance: MokSDK? = null
@@ -42,7 +47,7 @@ class MokSDK private constructor(private val context: Context) {
     }
 
 
-    fun initMokSDK(isProductionEvn : Boolean) {
+    fun initMokSDK(isProductionEvn: Boolean, readKey: String? = null, writeKey: String? = null) {
         MokSDKConstants.IS_PRODUCTION_ENV = isProductionEvn
         val bundle: Bundle? = getApiKeyFromManifest(context)
         if (bundle != null) {
@@ -76,6 +81,29 @@ class MokSDK private constructor(private val context: Context) {
         }
     }
 
+    private fun initializePushNotificationPermissionHandler(activity: Activity) {
+        pushNotificationPermissionHandler = PushNotificationPermissionHandler(
+            context.applicationContext,
+            activity
+        )
+    }
+
+    fun requestNotificationPermission(activity: Activity) {
+        initializePushNotificationPermissionHandler(activity)
+        pushNotificationPermissionHandler.requestPermission()
+    }
+
+    fun openNotificationSettings(activity: Activity) {
+        initializePushNotificationPermissionHandler(activity)
+        pushNotificationPermissionHandler.openNotificationSettings()
+    }
+
+    fun isNotificationPermissionGranted(activity: Activity): Boolean {
+        initializePushNotificationPermissionHandler(activity)
+        return pushNotificationPermissionHandler.isNotificationPermissionGranted()
+    }
+
+
     private fun readSavedInAppMessage() {
         val db = Room.databaseBuilder(getAppContext(), MokDb::class.java, "mok-database").build()
         val scope = CoroutineScope(Dispatchers.IO)
@@ -106,6 +134,7 @@ class MokSDK private constructor(private val context: Context) {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
+
 
     fun updateUser(
         userId: String,
@@ -223,7 +252,7 @@ class MokSDK private constructor(private val context: Context) {
                     "Fetching FCM registration token failed",
                     task.exception
                 )
-                callback(null,task.exception?.localizedMessage)
+                callback(null, task.exception?.localizedMessage)
             }
         }
     }

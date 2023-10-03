@@ -2,19 +2,34 @@ package com.unotag.mokone.pushNotification.fcm
 
 import android.app.Activity
 import android.content.Context
-import com.unotag.mokone.utils.MokLogger
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.annotation.RestrictTo
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.unotag.mokone.utils.MokLogger
 
-
-class PushNotificationPermissionHandler(
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+internal class PushNotificationPermissionHandler(
     private val mContext: Context,
     private val mActivity: Activity
 ) {
+
+    fun isNotificationPermissionGranted(): Boolean {
+        return if (ContextCompat.checkSelfPermission(
+                mContext,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            MokLogger.log(MokLogger.LogLevel.INFO, "Permission is already granted")
+            true
+        } else {
+            false
+        }
+    }
+
 
     fun requestPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -53,8 +68,6 @@ class PushNotificationPermissionHandler(
                 mActivity,
                 arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101
             )
-
-            //permissionLauncher!!.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -69,8 +82,7 @@ class PushNotificationPermissionHandler(
         }
 
         builder.setNegativeButton("Cancel") { dialog, which ->
-            // Handle Cancel button click
-            // You can add your logic here
+            dialog.dismiss()
         }
         val dialog: AlertDialog = builder.create()
         dialog.show()
@@ -91,18 +103,6 @@ class PushNotificationPermissionHandler(
         mContext.startActivity(intent)
     }
 
-    fun isNotificationPermissionGranted(): Boolean {
-        return if (ContextCompat.checkSelfPermission(
-                mContext,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            MokLogger.log(MokLogger.LogLevel.INFO, "Permission is already granted")
-            true
-        } else {
-            false
-        }
-    }
 
 }
 

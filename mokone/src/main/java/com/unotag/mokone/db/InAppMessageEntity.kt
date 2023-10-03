@@ -13,7 +13,8 @@ data class InAppMessageEntity(
     val campaignName: String?,
     val deepLink: String?,
     val viewType: String?,
-    val videoUrl: String?
+    val videoUrl: String?,
+
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
