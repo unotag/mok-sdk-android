@@ -43,12 +43,17 @@
             android:name="MOK_SMALL_NOTIFICATION_ICON"
             android:value="ic_notification" />
 
+        <meta-data
+            android:name="LogcatDefaultSearchKey"
+            android:value="MOKLOGGER" />
+
         <service
             android:name="com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
+
         </service>
     </application>
 
