@@ -6,11 +6,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-<!--    <application>-->
-<!--        <activity-->
-<!--            android:name=".inAppMessage.ui.InAppMessageBaseActivity"-->
-<!--            android:theme="@style/Theme.AppCompat.Translucent"-->
-<!--            android:exported="false" />-->
-<!--    </application>-->
+    <application>
+        <activity
+            android:name=".inAppMessage.ui.InAppMessageBaseActivity"
+            android:theme="@style/Theme.AppCompat.Translucent"
+            android:exported="false" />
+    </application>
 
 </manifest>
