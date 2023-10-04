@@ -1,7 +1,6 @@
 package com.unotag.mokone.pushNotification.fcm
 
 import InAppMessageData
-import com.unotag.mokone.utils.MokLogger
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,6 +14,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.pushNotification.NotificationRenderer
+import com.unotag.mokone.utils.MokLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,8 +46,8 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
 
-            if (remoteMessage.data.containsKey("notification_type") &&
-                remoteMessage.data["notification_type"] == "in_app_message"
+            if (remoteMessage.data.containsKey("popup") &&
+                remoteMessage.data["popup"] == "true"
             ) {
                 val notificationData = remoteMessage.data
                 handleInAppNotification(notificationData)
