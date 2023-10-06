@@ -1,18 +1,35 @@
 package com.unotag.mokone.inAppMessage.ui
 
+import android.content.DialogInterface
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.unotag.mokone.R
+import com.unotag.mokone.databinding.FragmentIAMBottomSheetBinding
 
 class IAMBottomSheetFragment : BottomSheetDialogFragment() {
+
+
+    private lateinit var binding : FragmentIAMBottomSheetBinding
+    private var dismissListener: OnIAMPopupDismissListener? = null
+
+    fun setOnDismissListener(listener: OnIAMPopupDismissListener) {
+        dismissListener = listener
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        dismissListener?.onDismiss()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_i_a_m_bottom_sheet, container, false)
+        binding = FragmentIAMBottomSheetBinding.inflate(inflater, container, false)
+        return binding.root
     }
+
+
 }

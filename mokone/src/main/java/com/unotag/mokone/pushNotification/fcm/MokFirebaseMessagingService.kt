@@ -184,5 +184,4 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             inAppMessageDao.insert(inAppMessageEntity)
         }
     }
-
 }
