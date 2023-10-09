@@ -9,7 +9,26 @@ class InAppMessageBaseActivity : AppCompatActivity(), OnIAMPopupDismissListener 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_in_app_message_base)
 
+        val message = intent.getStringExtra("message_key")
 
+        if (message != null) {
+            loadIAMWevViewDialog(message)
+        }
+
+        //  loadIAMWebViewBottomSheet()
+
+    }
+
+
+    private fun loadIAMWevViewDialog(message: String) {
+        val dialog = IAMWebViewDialog(this, message)
+        dialog.setOnDismissListener {
+            finish()
+        }
+        dialog.show()
+    }
+
+    private fun loadIAMWebViewBottomSheet() {
         val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment()
 
         // Set the listener for the fragment
