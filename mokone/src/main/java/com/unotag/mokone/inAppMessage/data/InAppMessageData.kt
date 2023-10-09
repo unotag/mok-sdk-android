@@ -1,5 +1,5 @@
+
 import androidx.room.Ignore
-import androidx.room.Entity
 import com.unotag.mokone.db.InAppMessageEntity
 
 data class InAppMessageData(
@@ -11,7 +11,9 @@ data class InAppMessageData(
     val campaignName: String?,
     val deepLink: String?,
     val viewType: String?,
-    val videoUrl: String?
+    val videoUrl: String?,
+    val popupHtml : String?,
+    val isSeen : Boolean
 ) {
     // This annotation ignores the field during Room database operations
     @Ignore
@@ -28,7 +30,9 @@ data class InAppMessageData(
             campaignName = campaignName,
             deepLink = deepLink,
             viewType = viewType,
-            videoUrl = videoUrl
+            videoUrl = videoUrl,
+            popupHtml =popupHtml,
+            isSeen = false
         )
     }
 
@@ -43,7 +47,9 @@ data class InAppMessageData(
                 campaignName = entity.campaignName,
                 deepLink = entity.deepLink,
                 viewType = entity.viewType,
-                videoUrl = entity.videoUrl
+                videoUrl = entity.videoUrl,
+                popupHtml = entity.popupHtml,
+                isSeen = entity.isSeen
             )
         }
 
@@ -57,7 +63,9 @@ data class InAppMessageData(
                 campaignName = data["campaignName"],
                 deepLink = data["deepLink"],
                 viewType = data["viewType"],
-                videoUrl = data["videoUrl"]
+                videoUrl = data["videoUrl"],
+                popupHtml = data["popup_html"],
+                isSeen = false
             )
         }
     }
