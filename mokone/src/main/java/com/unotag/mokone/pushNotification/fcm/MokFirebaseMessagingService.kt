@@ -1,6 +1,5 @@
 package com.unotag.mokone.pushNotification.fcm
 
-import InAppMessageData
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -13,6 +12,7 @@ import androidx.room.Room
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.unotag.mokone.db.MokDb
+import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import com.unotag.mokone.utils.MokLogger
 import kotlinx.coroutines.CoroutineScope
@@ -46,12 +46,29 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
 
+            //popup_configs={"number_of_times_view":"1","template_size":"1","sound":"1","number_of_seconds_view":"1","template_type":"spotlight","validity":"1"}
+            //
+//            Full Page - Open Webview URL - Open it in complete app page
+//            PIP Video - Exoplayer Video
+//            Bottom Sheet - Open below
+//            Normal - Webview inside dialog box with raw html
+
+//            <option value="spotlight">Spotlight</option>
+//            <option value="pip_video">PIP Video</option>
+//            <option value="tooltip">Tooltip</option>
+//            <option value="coach_mark">Coach mark</option>
+//            <option value="bottom_sheet">Bottom sheet</option>
+//            <option value="normal">Normal</option>
+//            <option value="full_page">Full Page</option>
+
             if (remoteMessage.data.containsKey("popup") &&
                 remoteMessage.data["popup"] == "true"
             ) {
                 val notificationData = remoteMessage.data
                 handleInAppNotification(notificationData)
-            }else{
+                //TODO: Remove this before going live
+                sendNotification(remoteMessage)
+            } else {
                 sendNotification(remoteMessage)
             }
 
@@ -109,7 +126,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
      */
     private fun handleNow() {
         MokLogger.log(MokLogger.LogLevel.DEBUG, "Short lived task is done.")
-     //   sendNotification()
+        //   sendNotification()
     }
 
     /**
@@ -146,7 +163,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(NotificationRenderer.getSmallNotificationIcon())
-            .setContentTitle("title")
+            .setContentTitle(remoteMessage.data["title"])
             .setContentText(remoteMessage.data["body"])
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -167,21 +184,33 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val notificationId = 0
+        val notificationId = System.currentTimeMillis().toInt()
+
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
 
     private fun handleInAppNotification(data: Map<String, String>) {
-        val inAppMessageData = InAppMessageData.fromMap(data)
+        try {
+            val inAppMessageData = InAppMessageData.fromMap(data)
 
-        val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
-        val scope = CoroutineScope(Dispatchers.IO)
+            val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
+            val scope = CoroutineScope(Dispatchers.IO)
 
-        scope.launch {
-            val inAppMessageDao = db.inAppMessageDao()
-            val inAppMessageEntity = inAppMessageData.toEntity()
-            inAppMessageDao.insert(inAppMessageEntity)
+            scope.launch {
+                try {
+                    val inAppMessageDao = db.inAppMessageDao()
+                    val inAppMessageEntity = inAppMessageData.toEntity()
+                    inAppMessageDao.insert(inAppMessageEntity)
+                } catch (e: Exception) {
+                    MokLogger.log(MokLogger.LogLevel.ERROR, "Error inserting in-app message: ${e.message}")
+                } finally {
+                    db.close() // Close the database when done
+                }
+            }
+        } catch (e: Exception) {
+            MokLogger.log(MokLogger.LogLevel.ERROR, "Error handling in-app notification: ${e.message}")
         }
     }
+
 }

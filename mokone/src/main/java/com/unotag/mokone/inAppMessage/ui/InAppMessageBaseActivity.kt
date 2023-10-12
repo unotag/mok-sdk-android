@@ -19,7 +19,6 @@ class InAppMessageBaseActivity : AppCompatActivity(), OnIAMPopupDismissListener 
 
     }
 
-
     private fun loadIAMWevViewDialog(message: String) {
         val dialog = IAMWebViewDialog(this, message)
         dialog.setOnDismissListener {

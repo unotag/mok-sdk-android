@@ -1,8 +1,8 @@
-
-import androidx.room.Ignore
+package com.unotag.mokone.inAppMessage.data
 import com.unotag.mokone.db.InAppMessageEntity
 
 data class InAppMessageData(
+    val id: Long,
     val title: String,
     val body: String,
     val imageUrl: String?,
@@ -15,9 +15,6 @@ data class InAppMessageData(
     val popupHtml : String?,
     val isSeen : Boolean
 ) {
-    // This annotation ignores the field during Room database operations
-    @Ignore
-    val id: Long = 0
 
     // Conversion functions
     fun toEntity(): InAppMessageEntity {
@@ -39,6 +36,7 @@ data class InAppMessageData(
     companion object {
         fun fromEntity(entity: InAppMessageEntity): InAppMessageData {
             return InAppMessageData(
+                id = entity.id,
                 title = entity.title,
                 body = entity.body,
                 imageUrl = entity.imageUrl,
@@ -55,6 +53,7 @@ data class InAppMessageData(
 
         fun fromMap(data: Map<String, String>): InAppMessageData {
             return InAppMessageData(
+                id = 0,
                 title = data["title"] ?: "",
                 body = data["body"] ?: "",
                 imageUrl = data["imageUrl"],

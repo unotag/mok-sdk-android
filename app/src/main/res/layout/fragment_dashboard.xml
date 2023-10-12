@@ -15,8 +15,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:background="#C5CAE9"
+            android:orientation="vertical"
             android:padding="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
@@ -35,8 +35,8 @@
                     android:layout_marginTop="8dp"
                     android:imeOptions="actionDone"
                     android:inputType="text"
-                    android:text="MOASDK_001"
-                    android:maxLines="1" />
+                    android:maxLines="1"
+                    android:text="MOASDK_001" />
             </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -52,8 +52,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:background="#C8E6C9"
+            android:orientation="vertical"
             android:padding="16dp">
 
 
@@ -93,7 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="add key value pair with comma separator\nEg- {'points' : '100', 'pageName' : 'dashboard'}"
-                android:textSize="10sp"/>
+                android:textSize="10sp" />
 
 
             <Button
@@ -196,6 +196,68 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Open Notification Settings" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="#BBDEFB"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#03A9F4">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="In app msg count: "
+                    android:textColor="@color/colorDarkText"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/iam_count_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorDarkText"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="Granted" />
+
+            </LinearLayout>
+
+
+            <Button
+                android:id="@+id/show_in_app_msg_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#03A9F4"
+                android:text="Show in app message"
+                android:textColor="#FFF" />
+
+            <Button
+                android:id="@+id/delete_in_app_msg_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#03A9F4"
+                android:text="Delete all in app message"
+                android:textColor="#FFF" />
+
+            <Button
+                android:id="@+id/reset_in_app_msg_seen_status_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#03A9F4"
+                android:text="Reset all IAM to unseen"
+                android:textColor="#FFF" />
+
         </LinearLayout>
 
     </LinearLayout>

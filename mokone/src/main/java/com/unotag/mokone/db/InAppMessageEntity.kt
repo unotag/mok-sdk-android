@@ -15,7 +15,7 @@ data class InAppMessageEntity(
     val viewType: String?,
     val videoUrl: String?,
     val popupHtml : String?,
-    val isSeen : Boolean
+    var isSeen : Boolean
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0

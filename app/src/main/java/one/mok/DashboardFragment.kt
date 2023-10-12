@@ -11,8 +11,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.unotag.mokone.MokSDK
 import com.unotag.mokone.utils.MokLogger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import one.mok.databinding.FragmentDashboardBinding
 import org.json.JSONObject
 
@@ -87,6 +91,27 @@ class DashboardFragment : Fragment() {
                 showToast("User ID or Event name cannot be blank")
             }
         }
+
+        binding.showInAppMsgBtn.setOnClickListener {
+            mMokSDK.readSavedInAppMessage()
+        }
+
+        binding.deleteInAppMsgBtn.setOnClickListener {
+            mMokSDK.deleteAllInAppMessages()
+        }
+
+        binding.resetInAppMsgSeenStatusBtn.setOnClickListener {
+            mMokSDK.resetIsSeenToUnSeen()
+        }
+
+
+    }
+
+    private suspend fun setIAMCountToTextView() {
+        val count = mMokSDK.getIAMCount()
+        withContext(Dispatchers.Main) {
+            binding.iamCountTv.text = count
+        }
     }
 
     private fun copyTextToClipboard(textToCopy: TextView) {
@@ -105,6 +130,9 @@ class DashboardFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         setNotificationPermissionStatus()
+        lifecycleScope.launch {
+            setIAMCountToTextView()
+        }
     }
 
 
@@ -130,19 +158,40 @@ class DashboardFragment : Fragment() {
     }
 
     private fun logEvent(userId: String, eventName: String) {
-        var params = binding.eventParamsEt.text.toString()
+        val params = binding.eventParamsEt.text.toString()
         val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-        val jsonBody = JSONObject(params)
-        mokSDK.logActivity(eventName, userId, jsonBody) { success, errorMessage ->
-            if (success != null) {
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
-            } else {
-                if (errorMessage != null) {
-                    MokLogger.log(MokLogger.LogLevel.ERROR, "update user result : $errorMessage")
+
+        if (params.isNotEmpty()) {
+            val jsonBody = JSONObject(params)
+            mokSDK.logActivity(eventName, userId, jsonBody) { success, errorMessage ->
+                if (success != null) {
+                    MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
+                } else {
+                    if (errorMessage != null) {
+                        MokLogger.log(
+                            MokLogger.LogLevel.ERROR,
+                            "update user result : $errorMessage"
+                        )
+                    }
+                }
+            }
+        } else {
+            // Handle the case when params is empty (null or "")
+            mokSDK.logActivity(eventName, userId) { success, errorMessage ->
+                if (success != null) {
+                    MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
+                } else {
+                    if (errorMessage != null) {
+                        MokLogger.log(
+                            MokLogger.LogLevel.ERROR,
+                            "update user result : $errorMessage"
+                        )
+                    }
                 }
             }
         }
     }
+
 
     private fun updateUser(userId: String) {
         val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
