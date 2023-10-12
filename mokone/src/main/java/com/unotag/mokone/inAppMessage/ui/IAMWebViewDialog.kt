@@ -29,14 +29,18 @@ class IAMWebViewDialog(
 
         val closeIv = findViewById<ImageView>(R.id.close_iv)
         closeIv.setOnClickListener {
+            dismiss()
             onDismissListener?.invoke()
         }
 
         val webView = findViewById<WebView>(R.id.webView)
         webView.settings.javaScriptEnabled = true
         WebView.setWebContentsDebuggingEnabled(true)
+        //if (type == raw){
         webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
-
+   // }else {
+        //webView.loadUrl(htmlContent)
+    //}
         // Adjust the dialog's size based on the content height
         val layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
