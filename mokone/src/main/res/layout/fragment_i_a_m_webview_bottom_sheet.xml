@@ -5,11 +5,5 @@
     android:layout_height="match_parent"
     tools:context=".inAppMessage.ui.IAMWebViewBottomSheetFragment">
 
-    <org.sufficientlysecure.htmltextview.HtmlTextView
-        android:id="@+id/html_text"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#BA6464"
-        android:textAppearance="@android:style/TextAppearance.Small" />
 
 </FrameLayout>
