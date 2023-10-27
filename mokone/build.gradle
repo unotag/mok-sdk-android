@@ -12,7 +12,7 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 33
-        versionName '0.0.13'
+        versionName '0.0.14'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -63,11 +63,7 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
 
-    implementation ("androidx.webkit:webkit:1.8.0")
-    implementation 'org.sufficientlysecure:html-textview:4.0'
-
-
-
+    implementation "androidx.webkit:webkit:1.8.0"
 }
 apply from: 'gradle-scripts/publish-root.gradle'
 apply from: 'gradle-scripts/publish-remote.gradle'
