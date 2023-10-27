@@ -104,7 +104,14 @@ class DashboardFragment : Fragment() {
             mMokSDK.resetIsSeenToUnSeen()
         }
 
-
+        binding.fetchInAppMsgBtn.setOnClickListener {
+            val userId = binding.userNameEt.text
+            if (!userId.isNullOrBlank() ) {
+                fetchInAppMessageData(userId.toString());
+            } else {
+                showToast("User ID or Event name cannot be blank")
+            }
+        }
     }
 
     private suspend fun setIAMCountToTextView() {
@@ -203,6 +210,19 @@ class DashboardFragment : Fragment() {
             } else {
                 if (errorMessage != null) {
                     MokLogger.log(MokLogger.LogLevel.ERROR, "update user result : $errorMessage")
+                }
+            }
+        }
+    }
+
+    private fun fetchInAppMessageData(userId: String) {
+        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
+        mokSDK.requestInAppMessageDataFromServer(userId) { success, errorMessage ->
+            if (success != null) {
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM fetched : $success")
+            } else {
+                if (errorMessage != null) {
+                    MokLogger.log(MokLogger.LogLevel.ERROR, "IAM fetch error : $errorMessage")
                 }
             }
         }

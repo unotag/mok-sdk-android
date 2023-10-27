@@ -258,6 +258,14 @@
                 android:text="Reset all IAM to unseen"
                 android:textColor="#FFF" />
 
+            <Button
+                android:id="@+id/fetch_in_app_msg_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#03A9F4"
+                android:text="Fetch in app message"
+                android:textColor="#FFF" />
+
         </LinearLayout>
 
     </LinearLayout>
