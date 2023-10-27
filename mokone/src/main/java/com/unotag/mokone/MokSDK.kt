@@ -60,7 +60,7 @@ class MokSDK private constructor(private val context: Context) {
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "READ_KEY : ${MokSDKConstants.READ_KEY}")
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "WRITE_KEY : ${MokSDKConstants.WRITE_KEY}")
 
-                readTopSavedInAppMessage()
+                readSavedInAppMessage()
 
             }else{
                 MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
@@ -329,6 +329,39 @@ class MokSDK private constructor(private val context: Context) {
             MokApiCallTask.HttpMethod.POST,
             MokApiCallTask.MokRequestMethod.WRITE,
             data
+        ) { result ->
+            when (result) {
+                is MokApiCallTask.ApiResult.Success -> {
+                    val response = result.response
+                    callback(response, null)
+                    MokLogger.log(
+                        MokLogger.LogLevel.DEBUG, "User activity logged successfully"
+
+                    )
+                }
+
+                is MokApiCallTask.ApiResult.Error -> {
+                    val error = result.exception
+                    callback(null, error.localizedMessage)
+                }
+
+                else -> {
+                    callback(null, "Something went wrong")
+
+                }
+            }
+        }
+    }
+
+    fun requestInAppMessageDataFromServer(
+        userId: String,
+        callback: (success: JSONObject?, error: String?) -> Unit
+    ) {
+        val apiCallTask = MokApiCallTask()
+        apiCallTask.performApiCall(
+            MokApiConstants.BASE_URL + MokApiConstants.URL_IN_APP_MESSAGE_DATA + "?external_player_id=$userId",
+            MokApiCallTask.HttpMethod.GET,
+            MokApiCallTask.MokRequestMethod.READ,
         ) { result ->
             when (result) {
                 is MokApiCallTask.ApiResult.Success -> {

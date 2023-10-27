@@ -20,6 +20,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
+//popup_configs={"number_of_times_view":"1","template_size":"1","sound":"1","number_of_seconds_view":"1","template_type":"spotlight","validity":"1"}
+//
+//            Full Page - Open Webview URL - Open it in complete app page
+//            PIP Video - Exoplayer Video
+//            Bottom Sheet - Open below
+//            Normal - Webview inside dialog box with raw html
+
+//            <option value="spotlight">Spotlight</option>
+//            <option value="pip_video">PIP Video</option>
+//            <option value="tooltip">Tooltip</option>
+//            <option value="coach_mark">Coach mark</option>
+//            <option value="bottom_sheet">Bottom sheet</option>
+//            <option value="normal">Normal</option>
+//            <option value="full_page">Full Page</option>
+
 class MokFirebaseMessagingService : FirebaseMessagingService() {
 
     /**
@@ -46,20 +61,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
 
-            //popup_configs={"number_of_times_view":"1","template_size":"1","sound":"1","number_of_seconds_view":"1","template_type":"spotlight","validity":"1"}
-            //
-//            Full Page - Open Webview URL - Open it in complete app page
-//            PIP Video - Exoplayer Video
-//            Bottom Sheet - Open below
-//            Normal - Webview inside dialog box with raw html
 
-//            <option value="spotlight">Spotlight</option>
-//            <option value="pip_video">PIP Video</option>
-//            <option value="tooltip">Tooltip</option>
-//            <option value="coach_mark">Coach mark</option>
-//            <option value="bottom_sheet">Bottom sheet</option>
-//            <option value="normal">Normal</option>
-//            <option value="full_page">Full Page</option>
 
             if (remoteMessage.data.containsKey("popup") &&
                 remoteMessage.data["popup"] == "true"
@@ -86,6 +88,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         remoteMessage.notification?.let {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message Notification Body: ${it.body}")
             it.body?.let { body -> sendNotification(remoteMessage) }
+
         }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
@@ -183,9 +186,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-
         val notificationId = System.currentTimeMillis().toInt()
-
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
 

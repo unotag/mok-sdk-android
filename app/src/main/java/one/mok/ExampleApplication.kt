@@ -14,8 +14,11 @@ class ExampleApplication : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        // This is called when an activity is created. You can put your initialization code here.
-        if (activity is MainActivity) { // Change to the appropriate activity class
+        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityCreated: ${activity.javaClass.simpleName}")
+
+        val currentActivityName =  "MainActivity"
+
+        if (activity.javaClass.simpleName == currentActivityName) {
             val mokSDK = MokSDK.getInstance(applicationContext)
             mokSDK.initMokSDK(isProductionEvn = false)
             MokLogger.setLogLevel(MokLogger.LogLevel.DEBUG)
