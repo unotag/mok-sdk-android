@@ -17,11 +17,17 @@ interface InAppMessageDao {
     @Query("SELECT * FROM in_app_messages")
     suspend fun getAllInAppMessages(): List<InAppMessageEntity>
 
-    @Query("UPDATE in_app_messages SET isSeen = 1 WHERE id = :id")
-    suspend fun markAsSeen(id: Long)
+    @Query("SELECT * FROM in_app_messages ORDER BY inAppMessageId DESC LIMIT 1")
+    fun getLatestMessage(): InAppMessageEntity?
 
-    @Query("UPDATE in_app_messages SET isSeen = 0")
-    suspend fun resetIsSeenToFalse()
+    @Query("SELECT * FROM in_app_messages ORDER BY inAppMessageId DESC LIMIT 3")
+    fun getLatest3Message(): InAppMessageEntity?
+
+    // @Query("UPDATE in_app_message SET isSeen = 1 WHERE id = :id")
+    //  suspend fun markAsSeen(id: Long)
+
+    // @Query("UPDATE in_app_message SET isSeen = 0")
+    //  suspend fun resetIsSeenToFalse()
 
     @Query("DELETE FROM in_app_messages")
     suspend fun deleteAllInAppMessages()

@@ -12,7 +12,6 @@ task androidSourcesJar(type: Jar) {
         // For pure kotlin libraries
         sourceDirs = sourceSets.main.java.srcDirs + sourceSets.main.kotlin.srcDirs
     }
-
     from sourceDirs
 }
 
@@ -21,8 +20,8 @@ artifacts {
     archives androidSourcesJar
 }
 
-group = 'com.unotags'
-version = '0.0.14'
+//group = 'com.unotags'
+//version = '0.0.16'
 
 afterEvaluate {
     publishing {
@@ -77,13 +76,6 @@ afterEvaluate {
 
 
 signing {
-//    useInMemoryPgpKeys(
-//            rootProject.ext["signing.keyId"],
-//            rootProject.ext["signing.key"],
-//            rootProject.ext["signing.password"]
-//    )
-//    sign publishing.publications
-   // useGpgCmd()
     sign publishing.publications
 }
 //command to publish

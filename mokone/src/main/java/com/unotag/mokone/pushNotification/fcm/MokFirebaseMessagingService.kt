@@ -8,16 +8,10 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.room.Room
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.unotag.mokone.db.MokDb
-import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import com.unotag.mokone.utils.MokLogger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 //popup_configs={"number_of_times_view":"1","template_size":"1","sound":"1","number_of_seconds_view":"1","template_type":"spotlight","validity":"1"}
@@ -67,7 +61,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
                 remoteMessage.data["popup"] == "true"
             ) {
                 val notificationData = remoteMessage.data
-                handleInAppNotification(notificationData)
+               // handleInAppNotification(notificationData)
                 //TODO: Remove this before going live
                 sendNotification(remoteMessage)
             } else {
@@ -193,22 +187,22 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun handleInAppNotification(data: Map<String, String>) {
         try {
-            val inAppMessageData = InAppMessageData.fromMap(data)
+            //val inAppMessageData = InAppMessageData.fromMap(data)
 
-            val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
-            val scope = CoroutineScope(Dispatchers.IO)
-
-            scope.launch {
-                try {
-                    val inAppMessageDao = db.inAppMessageDao()
-                    val inAppMessageEntity = inAppMessageData.toEntity()
-                    inAppMessageDao.insert(inAppMessageEntity)
-                } catch (e: Exception) {
-                    MokLogger.log(MokLogger.LogLevel.ERROR, "Error inserting in-app message: ${e.message}")
-                } finally {
-                    db.close() // Close the database when done
-                }
-            }
+//            val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
+//            val scope = CoroutineScope(Dispatchers.IO)
+//
+//            scope.launch {
+//                try {
+//                    val inAppMessageDao = db.inAppMessageDao()
+//                    val inAppMessageEntity = inAppMessageData.toEntity()
+//                    inAppMessageDao.insert(inAppMessageEntity)
+//                } catch (e: Exception) {
+//                    MokLogger.log(MokLogger.LogLevel.ERROR, "Error inserting in-app message: ${e.message}")
+//                } finally {
+//                    db.close() // Close the database when done
+//                }
+//            }
         } catch (e: Exception) {
             MokLogger.log(MokLogger.LogLevel.ERROR, "Error handling in-app notification: ${e.message}")
         }

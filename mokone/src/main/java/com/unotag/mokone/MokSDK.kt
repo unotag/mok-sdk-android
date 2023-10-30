@@ -8,6 +8,8 @@ import android.os.Bundle
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.core.MokSDKConstants
+import com.unotag.mokone.inAppMessage.InAppMessageHandler
+import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
@@ -49,12 +51,15 @@ class MokSDK private constructor(private val context: Context) {
                 MokSDKConstants.WRITE_KEY = writeKey!!
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "READ_KEY : ${MokSDKConstants.READ_KEY}")
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "WRITE_KEY : ${MokSDKConstants.WRITE_KEY}")
-            }else{
+            } else {
                 MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
             }
         } else {
             MokLogger.log(MokLogger.LogLevel.ERROR, "Manifest meta is null")
         }
+
+
+        requestIAMFromServerAndShow()
     }
 
     //TODO: make this private before going live
@@ -73,7 +78,25 @@ class MokSDK private constructor(private val context: Context) {
     }
 
 
-//region Notification status, permission, settings
+//region FetchFCM Notification status, permission, settings
+
+    fun getFCMToken(callback: (String?, String?) -> Unit) {
+        Firebase.messaging.token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "FCM token: $token")
+                callback(token, null)
+            } else {
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "Fetching FCM registration token failed",
+                    task.exception
+                )
+                callback(null, task.exception?.localizedMessage)
+            }
+        }
+    }
+
     private fun initializePushNotificationPermissionHandler(activity: Activity) {
         pushNotificationPermissionHandler = PushNotificationPermissionHandler(
             context.applicationContext,
@@ -98,7 +121,7 @@ class MokSDK private constructor(private val context: Context) {
 //endregion
 
 
-
+    //region UpdateUser, triggerWorkflow, logActivity requestInAppMessageDataFromServer API
     fun updateUser(
         userId: String,
         data: JSONObject?,
@@ -202,56 +225,22 @@ class MokSDK private constructor(private val context: Context) {
         }
     }
 
-    fun requestInAppMessageDataFromServer(
-        userId: String,
-        callback: (success: JSONObject?, error: String?) -> Unit
-    ) {
-        val apiCallTask = MokApiCallTask()
-        apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_IN_APP_MESSAGE_DATA + "?external_player_id=$userId",
-            MokApiCallTask.HttpMethod.GET,
-            MokApiCallTask.MokRequestMethod.READ,
-        ) { result ->
-            when (result) {
-                is MokApiCallTask.ApiResult.Success -> {
-                    val response = result.response
-                    callback(response, null)
-                    MokLogger.log(
-                        MokLogger.LogLevel.DEBUG, "User activity logged successfully"
 
-                    )
-                }
+//endregion
 
-                is MokApiCallTask.ApiResult.Error -> {
-                    val error = result.exception
-                    callback(null, error.localizedMessage)
-                }
+    //region In App messages
 
-                else -> {
-                    callback(null, "Something went wrong")
-
-                }
-            }
+    fun requestIAMFromServerAndShow() {
+        val inAppMessageHandler = InAppMessageHandler(context)
+        inAppMessageHandler?.fetchIAMFromServerAndSaveToDB(
+            "MOASDK_001"
+        ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
+            inAppMessageHandler.showIAM()
         }
     }
 
 
-    fun getFCMToken(callback: (String?, String?) -> Unit) {
-        Firebase.messaging.token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "FCM token: $token")
-                callback(token, null)
-            } else {
-                MokLogger.log(
-                    MokLogger.LogLevel.ERROR,
-                    "Fetching FCM registration token failed",
-                    task.exception
-                )
-                callback(null, task.exception?.localizedMessage)
-            }
-        }
-    }
+//endregion
 
 
     //TODO: Delete this before going live
