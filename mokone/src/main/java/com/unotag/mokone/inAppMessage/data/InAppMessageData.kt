@@ -70,6 +70,8 @@ data class PopupConfigs(
     val numberOfSecondsView: String?,
     @SerializedName("web_url")
     val webUrl: String?,
+    @SerializedName("video_url")
+    val videoUrl: String?,
     @SerializedName("start_time")
     val startTime: String?,
     @SerializedName("end_time")

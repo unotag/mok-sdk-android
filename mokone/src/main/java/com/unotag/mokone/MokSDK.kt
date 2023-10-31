@@ -59,6 +59,7 @@ class MokSDK private constructor(private val context: Context) {
         }
 
 
+        //TODO: when user id is not avail
         requestIAMFromServerAndShow()
     }
 
@@ -121,7 +122,7 @@ class MokSDK private constructor(private val context: Context) {
 //endregion
 
 
-    //region UpdateUser, triggerWorkflow, logActivity requestInAppMessageDataFromServer API
+//region UpdateUser, triggerWorkflow, logActivity requestInAppMessageDataFromServer API
     fun updateUser(
         userId: String,
         data: JSONObject?,
@@ -235,10 +236,9 @@ class MokSDK private constructor(private val context: Context) {
         inAppMessageHandler?.fetchIAMFromServerAndSaveToDB(
             "MOASDK_001"
         ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
-            inAppMessageHandler.showIAM()
+            inAppMessageHandler.showInAppMessages(30)
         }
     }
-
 
 //endregion
 

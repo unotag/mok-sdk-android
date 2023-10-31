@@ -20,8 +20,8 @@ artifacts {
     archives androidSourcesJar
 }
 
-//group = 'com.unotags'
-//version = '0.0.16'
+group = 'com.unotags'
+version = '0.0.17'
 
 afterEvaluate {
     publishing {

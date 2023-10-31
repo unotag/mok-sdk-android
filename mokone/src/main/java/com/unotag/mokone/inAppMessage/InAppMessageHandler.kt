@@ -7,7 +7,6 @@ import com.google.gson.Gson
 import com.unotag.mokone.db.InAppMessageEntity
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.inAppMessage.data.InAppMessageData
-import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
@@ -30,7 +29,8 @@ class InAppMessageHandler(private val context: Context) {
     ) {
         val apiCallTask = MokApiCallTask()
         apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_IN_APP_MESSAGE_DATA + "?external_player_id=$userId",
+            //MokApiConstants.BASE_URL + MokApiConstants.URL_IN_APP_MESSAGE_DATA + "?external_player_id=$userId",
+            MokApiConstants.BASE_URL + MokApiConstants.URL_PENDING_IN_APP_MESSAGE + userId,
             MokApiCallTask.HttpMethod.GET,
             MokApiCallTask.MokRequestMethod.READ
         ) { result ->
@@ -47,7 +47,7 @@ class InAppMessageHandler(private val context: Context) {
                             val inAppMessageId = inAppMessage?.inAppId
                             val inAppMessageAsString = Gson().toJson(inAppMessage)
                             CoroutineScope(Dispatchers.IO).async {
-                                saveInAppMessageDataToRoom(inAppMessageId, inAppMessageAsString)
+                                saveInAppMessageInLocalDb(inAppMessageId, inAppMessageAsString)
                             }
                         }
                         // Await all the deferred results
@@ -77,7 +77,7 @@ class InAppMessageHandler(private val context: Context) {
         }
     }
 
-    private suspend fun saveInAppMessageDataToRoom(
+    private suspend fun saveInAppMessageInLocalDb(
         inAppMessageId: String?,
         inAppMessageAsString: String?
     ): Deferred<Unit> {
@@ -101,49 +101,44 @@ class InAppMessageHandler(private val context: Context) {
     }
 
 
-    private fun fetchLatestIAMEntry(): InAppMessageItem? {
+    private suspend fun fetchIAMEntry(limit: Int): List<InAppMessageEntity>? {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
-        try {
+        return try {
             val inAppMessageDao = db.inAppMessageDao()
-            val latestMessage = inAppMessageDao.getLatestMessage()
-
-            return Gson().fromJson(
-                latestMessage?.inAppMessageAsString,
-                InAppMessageItem::class.java
-            )
+            inAppMessageDao.getMessages(limit)
         } catch (e: Exception) {
             MokLogger.log(
                 MokLogger.LogLevel.ERROR,
                 "Error fetching latest in-app message entry from the database: ${e.message}"
             )
-            return null
+            null
         } finally {
-            db.close()
+            // db.close()
         }
     }
 
-    private fun showIAMWebViewDialog(message: InAppMessageItem) {
-        MokLogger.log(
-            MokLogger.LogLevel.DEBUG,
-            "showInAppMessageDialog msg : ${message.jsonData?.title}"
-        )
-
+    private fun launchIAMBaseActivity(inAppMessageItem: String) {
         val intent = Intent(context, InAppMessageBaseActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        intent.putExtra("message_key", message.jsonData?.title)
+        intent.putExtra("in_app_message_data", inAppMessageItem)
         context.startActivity(intent)
     }
 
 
-    fun showIAM() {
+    fun showInAppMessages(limit: Int? = 1) {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         coroutineScope.launch {
             try {
-                val inAppMessageItem = fetchLatestIAMEntry()
-                withContext(Dispatchers.Main) {
-                    if (inAppMessageItem != null)
-                        showIAMWebViewDialog(inAppMessageItem)
+                val inAppMessageEntries = fetchIAMEntry(limit ?: 1)
+                if (inAppMessageEntries != null) {
+                    withContext(Dispatchers.Main) {
+                        for (inAppMessageEntry in inAppMessageEntries) {
+                            if (inAppMessageEntry.inAppMessageAsString != null) {
+                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
+                            }
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 MokLogger.log(
@@ -154,52 +149,6 @@ class InAppMessageHandler(private val context: Context) {
         }
     }
 
-
-    fun readTopSavedInAppMessage() {
-        val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
-        val scope = CoroutineScope(Dispatchers.IO)
-
-        scope.launch {
-            try {
-                val inAppMessageDao = db.inAppMessageDao()
-                val savedInAppMessages: List<InAppMessageEntity> =
-                    inAppMessageDao.getAllInAppMessages()
-
-                if (savedInAppMessages.isNotEmpty()) {
-                    MokLogger.log(
-                        MokLogger.LogLevel.DEBUG, "Message count size:${savedInAppMessages.size}"
-                    )
-
-                    // Retrieve the top (first) in-app message from the list
-                    val topMessage = savedInAppMessages.last()
-
-                    // Convert InAppMessageEntity to com.unotag.mokone.inAppMessage.data.InAppMessageData and perform actions
-                    //val inAppMessageData = InAppMessageData.fromEntity(topMessage)
-                    try {
-                        //  inAppMessageData.popupHtml?.let { showInAppMessageDialog(it) }
-                    } catch (e: Exception) {
-                        MokLogger.log(
-                            MokLogger.LogLevel.ERROR,
-                            "Error showing in-app message dialog: ${e.message}"
-                        )
-                    }
-
-                    // Uncomment the following lines if you want to mark the message as seen
-                    // if (!inAppMessageData.isSeen) {
-                    //     inAppMessageDao.markAsSeen(inAppMessageData.id)
-                    // }
-
-                    // Call the method to show the in-app message dialog
-                }
-            } catch (e: Exception) {
-                MokLogger.log(
-                    MokLogger.LogLevel.ERROR, "Error reading top saved in-app message: ${e.message}"
-                )
-            } finally {
-                //db.close() // Close the database when done
-            }
-        }
-    }
 
     suspend fun deleteAllInAppMessages() {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
