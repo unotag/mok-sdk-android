@@ -10,5 +10,6 @@ class MokApiConstants {
         const val URL_TRIGGER_WORKFLOW = "/trigger/"
         const val URL_ADD_USER_ACTIVITY = "/add-user-activity/"
         const val URL_IN_APP_MESSAGE_DATA = "/in_app_operation_data/"
+        const val URL_PENDING_IN_APP_MESSAGE = "/pending-popups/"
     }
 }

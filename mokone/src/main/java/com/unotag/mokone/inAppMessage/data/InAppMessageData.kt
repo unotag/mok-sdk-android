@@ -1,71 +1,79 @@
 package com.unotag.mokone.inAppMessage.data
-import com.unotag.mokone.db.InAppMessageEntity
+
+import com.google.gson.annotations.SerializedName
 
 data class InAppMessageData(
-    val id: Long,
-    val title: String,
-    val body: String,
-    val imageUrl: String?,
-    val startDate: Long?,
-    val endDate: Long?,
-    val campaignName: String?,
-    val deepLink: String?,
-    val viewType: String?,
+    @SerializedName("data")
+    val data: List<InAppMessageItem?>?,
+    @SerializedName("success")
+    val success: Boolean?,
+    @SerializedName("total")
+    val total: Int?
+)
+
+data class InAppMessageItem(
+    @SerializedName("in_app_id")
+    val inAppId: String?,
+    @SerializedName("org_id")
+    val orgId: String?,
+    @SerializedName("ClientId")
+    val clientId: String?,
+    @SerializedName("json_data")
+    val jsonData: JsonData?,
+    @SerializedName("comment")
+    val comment: String?, // You can replace with the actual type
+    @SerializedName("isActive")
+    val isActive: Boolean?,
+    @SerializedName("updatedBy")
+    val updatedBy: String?, // You can replace with the actual type
+    @SerializedName("createdBy")
+    val createdBy: String?, // You can replace with the actual type
+    @SerializedName("createdAt")
+    val createdAt: String?,
+    @SerializedName("updatedAt")
+    val updatedAt: String?,
+    @SerializedName("read")
+    val read: Boolean?,
+    @SerializedName("type")
+    val type: String? // You can replace with the actual type
+)
+
+data class JsonData(
+    @SerializedName("popup_configs")
+    val popupConfigs: PopupConfigs?,
+    @SerializedName("in_app_click_action")
+    val inAppClickAction: String?,
+    @SerializedName("text")
+    val text: String?,
+    @SerializedName("title")
+    val title: String?,
+    @SerializedName("image")
+    val image: String?, // You can replace with the actual type
+    @SerializedName("icon")
+    val icon: String?, // You can replace with the actual type
+    @SerializedName("category")
+    val category: String?,
+    @SerializedName("html")
+    val html: String?,
+    )
+
+data class PopupConfigs(
+    @SerializedName("sound")
+    val sound: String?,
+    @SerializedName("template_type")
+    val templateType: String?,
+    @SerializedName("template_size")
+    val templateSize: String?,
+    @SerializedName("number_of_times_view")
+    val numberOfTimesView: String?,
+    @SerializedName("number_of_seconds_view")
+    val numberOfSecondsView: String?,
+    @SerializedName("web_url")
+    val webUrl: String?,
+    @SerializedName("video_url")
     val videoUrl: String?,
-    val popupHtml : String?,
-    val isSeen : Boolean
-) {
-
-    // Conversion functions
-    fun toEntity(): InAppMessageEntity {
-        return InAppMessageEntity(
-            title = title,
-            body = body,
-            imageUrl = imageUrl,
-            startDate = startDate,
-            endDate = endDate,
-            campaignName = campaignName,
-            deepLink = deepLink,
-            viewType = viewType,
-            videoUrl = videoUrl,
-            popupHtml =popupHtml,
-            isSeen = false
-        )
-    }
-
-    companion object {
-        fun fromEntity(entity: InAppMessageEntity): InAppMessageData {
-            return InAppMessageData(
-                id = entity.id,
-                title = entity.title,
-                body = entity.body,
-                imageUrl = entity.imageUrl,
-                startDate = entity.startDate,
-                endDate = entity.endDate,
-                campaignName = entity.campaignName,
-                deepLink = entity.deepLink,
-                viewType = entity.viewType,
-                videoUrl = entity.videoUrl,
-                popupHtml = entity.popupHtml,
-                isSeen = entity.isSeen
-            )
-        }
-
-        fun fromMap(data: Map<String, String>): InAppMessageData {
-            return InAppMessageData(
-                id = 0,
-                title = data["title"] ?: "",
-                body = data["body"] ?: "",
-                imageUrl = data["imageUrl"],
-                startDate = data["startDate"]?.toLongOrNull(),
-                endDate = data["endDate"]?.toLongOrNull(),
-                campaignName = data["campaignName"],
-                deepLink = data["deepLink"],
-                viewType = data["viewType"],
-                videoUrl = data["videoUrl"],
-                popupHtml = data["popup_html"],
-                isSeen = false
-            )
-        }
-    }
-}
+    @SerializedName("start_time")
+    val startTime: String?,
+    @SerializedName("end_time")
+    val endTime: String?
+)

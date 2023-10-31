@@ -93,15 +93,15 @@ class DashboardFragment : Fragment() {
         }
 
         binding.showInAppMsgBtn.setOnClickListener {
-            mMokSDK.readSavedInAppMessage()
+           // mMokSDK.readSavedInAppMessage()
         }
 
         binding.deleteInAppMsgBtn.setOnClickListener {
-            mMokSDK.deleteAllInAppMessages()
+            //mMokSDK.deleteAllInAppMessages()
         }
 
         binding.resetInAppMsgSeenStatusBtn.setOnClickListener {
-            mMokSDK.resetIsSeenToUnSeen()
+           // mMokSDK.resetIsSeenToUnSeen()
         }
 
         binding.fetchInAppMsgBtn.setOnClickListener {
@@ -115,9 +115,9 @@ class DashboardFragment : Fragment() {
     }
 
     private suspend fun setIAMCountToTextView() {
-        val count = mMokSDK.getIAMCount()
+        //val count = mMokSDK.getIAMCount()
         withContext(Dispatchers.Main) {
-            binding.iamCountTv.text = count
+           // binding.iamCountTv.text = count
         }
     }
 
@@ -217,15 +217,15 @@ class DashboardFragment : Fragment() {
 
     private fun fetchInAppMessageData(userId: String) {
         val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-        mokSDK.requestInAppMessageDataFromServer(userId) { success, errorMessage ->
-            if (success != null) {
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM fetched : $success")
-            } else {
-                if (errorMessage != null) {
-                    MokLogger.log(MokLogger.LogLevel.ERROR, "IAM fetch error : $errorMessage")
-                }
-            }
-        }
+//        mokSDK.requestInAppMessageDataFromServer(userId) { success, errorMessage ->
+//            if (success != null) {
+//                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM fetched : $success")
+//            } else {
+//                if (errorMessage != null) {
+//                    MokLogger.log(MokLogger.LogLevel.ERROR, "IAM fetch error : $errorMessage")
+//                }
+//            }
+//        }
     }
 
     private fun updateFcmToken(userId: String, fcmToken: String?) {

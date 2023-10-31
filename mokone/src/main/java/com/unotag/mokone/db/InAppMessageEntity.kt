@@ -5,18 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "in_app_messages")
 data class InAppMessageEntity(
-    val title: String,
-    val body: String,
-    val imageUrl: String?,
-    val startDate: Long?,
-    val endDate: Long?,
-    val campaignName: String?,
-    val deepLink: String?,
-    val viewType: String?,
-    val videoUrl: String?,
-    val popupHtml : String?,
-    var isSeen : Boolean
-) {
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0
-}
+    @PrimaryKey
+    val inAppMessageId: String = "",
+    val inAppMessageAsString: String?,
+    val isSeen: Boolean = false
+)

@@ -14,9 +14,12 @@ class ExampleApplication : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityCreated: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivityCreated: ${activity.javaClass.simpleName}"
+        )
 
-        val currentActivityName =  "MainActivity"
+        val currentActivityName = "MainActivity"
 
         if (activity.javaClass.simpleName == currentActivityName) {
             val mokSDK = MokSDK.getInstance(applicationContext)
@@ -26,11 +29,17 @@ class ExampleApplication : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onActivityStarted(activity: Activity) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityStarted: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivityStarted: ${activity.javaClass.simpleName}"
+        )
     }
 
     override fun onActivityResumed(activity: Activity) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityResumed: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivityResumed: ${activity.javaClass.simpleName}"
+        )
     }
 
     override fun onActivityPaused(activity: Activity) {
@@ -38,18 +47,25 @@ class ExampleApplication : Application(), Application.ActivityLifecycleCallbacks
     }
 
     override fun onActivityStopped(activity: Activity) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityStopped: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivityStopped: ${activity.javaClass.simpleName}"
+        )
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivitySaveInstanceState: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivitySaveInstanceState: ${activity.javaClass.simpleName}"
+        )
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityDestroyed: ${activity.javaClass.simpleName}")
+        MokLogger.log(
+            MokLogger.LogLevel.INFO,
+            "onActivityDestroyed: ${activity.javaClass.simpleName}"
+        )
     }
-
-    // Implement other ActivityLifecycleCallbacks methods if needed
 
     override fun onTerminate() {
         super.onTerminate()
