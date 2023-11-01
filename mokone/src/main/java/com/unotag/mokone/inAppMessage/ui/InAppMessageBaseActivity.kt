@@ -6,7 +6,11 @@ import com.google.gson.Gson
 import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 
-class InAppMessageBaseActivity : AppCompatActivity(), OnIAMPopupDismissListener {
+class InAppMessageBaseActivity() : AppCompatActivity() {
+
+
+    private lateinit var  mInAppMessageId : String
+    private lateinit var inAppMessageBaseActivityFinishListener : InAppMessageBaseActivityFinishListener
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,19 +21,28 @@ class InAppMessageBaseActivity : AppCompatActivity(), OnIAMPopupDismissListener 
 
         val inAppMessageItem = Gson().fromJson(inAppMessageItemString, InAppMessageItem::class.java)
 
+        this.mInAppMessageId = inAppMessageItem.inAppId ?: "NA"
+
         popupDecisionEngine(inAppMessageItem)
+    }
+
+    fun setFinishListener(listener: InAppMessageBaseActivityFinishListener) {
+        inAppMessageBaseActivityFinishListener = listener
     }
 
 
     private fun popupDecisionEngine(inAppMessageItem: InAppMessageItem) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> {
+                //TODO: create title, image, body popup
                 loadIAMWebViewDialog(inAppMessageItem)
             }
             "bottom_sheet" -> {
+                //TODO: create title, image, body popup
                 loadIAMWebViewBottomSheet()
             }
             "full_page" -> {
+                //TODO: create full screen frag which acc web url
 
             }
             "pip_video" -> {
@@ -64,8 +77,9 @@ class InAppMessageBaseActivity : AppCompatActivity(), OnIAMPopupDismissListener 
         )
     }
 
-    override fun onDismiss() {
-        // Finish the activity when the fragment is dismissed
-        finish()
-    }
+}
+
+
+interface InAppMessageBaseActivityFinishListener{
+   fun onInAppMessageClosed(inAppMessageId: String)
 }

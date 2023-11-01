@@ -8,6 +8,7 @@ import com.unotag.mokone.db.InAppMessageEntity
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
+import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivityFinishListener
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.utils.MokLogger
@@ -20,11 +21,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-class InAppMessageHandler(private val context: Context) {
+class InAppMessageHandler(private val context: Context, private val userId: String) :
+    InAppMessageBaseActivityFinishListener {
 
 
     fun fetchIAMFromServerAndSaveToDB(
-        userId: String,
         callback: (inAppMessageData: InAppMessageData?, error: String?) -> Unit
     ) {
         val apiCallTask = MokApiCallTask()
@@ -58,7 +59,74 @@ class InAppMessageHandler(private val context: Context) {
                         callback(inAppMessageData, null)
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
-                            "In-App Message data fetched and saved to Room successfully"
+                            "In-App Message data fetched successfully"
+                        )
+                    } catch (e: Exception) {
+                        MokLogger.log(
+                            MokLogger.LogLevel.DEBUG,
+                            e.localizedMessage
+                        )
+                        callback(null, "Failed to parse the API response")
+                    }
+                }
+
+                is MokApiCallTask.ApiResult.Error -> {
+                    val error = result.exception
+                    callback(null, error.localizedMessage)
+                }
+
+                else -> {
+                    callback(null, "Something went wrong")
+                }
+            }
+        }
+    }
+
+
+    private suspend fun saveInAppMessageInLocalDb(
+        inAppMessageId: String?,
+        inAppMessageAsString: String?
+    ): Deferred<Unit> {
+        return CoroutineScope(Dispatchers.IO).async {
+            val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
+
+            try {
+                val inAppMessageEntity =
+                    InAppMessageEntity(inAppMessageId ?: "", inAppMessageAsString)
+                val inAppMessageDao = db.inAppMessageDao()
+                inAppMessageDao.insert(inAppMessageEntity)
+            } catch (e: Exception) {
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "Error inserting in-app message: ${e.message}"
+                )
+            } finally {
+                //db.close()
+            }
+        }
+    }
+
+    fun markIAMReadInLocalAndServer(
+        inAppMessageId: String,
+        callback: (inAppMessageData: String?, error: String?) -> Unit
+    ) {
+        val apiCallTask = MokApiCallTask()
+        apiCallTask.performApiCall(
+            MokApiConstants.BASE_URL + MokApiConstants.URL_MARK_READ_IN_APP_MESSAGE + userId + "?in_app_id=$inAppMessageId",
+            MokApiCallTask.HttpMethod.PATCH,
+            MokApiCallTask.MokRequestMethod.WRITE
+        ) { result ->
+            when (result) {
+                is MokApiCallTask.ApiResult.Success -> {
+                    val response = result.response
+                    try {
+                        callback(response.toString(), null)
+
+                        markIAMAsSeenLocally(inAppMessageId)
+
+                        MokLogger.log(
+                            MokLogger.LogLevel.DEBUG,
+                            "In-App Message mark as read successfully"
                         )
                     } catch (e: Exception) {
                         callback(null, "Failed to parse the API response")
@@ -77,22 +145,18 @@ class InAppMessageHandler(private val context: Context) {
         }
     }
 
-    private suspend fun saveInAppMessageInLocalDb(
-        inAppMessageId: String?,
-        inAppMessageAsString: String?
-    ): Deferred<Unit> {
+
+    private fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
         return CoroutineScope(Dispatchers.IO).async {
             val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
             try {
-                val inAppMessageEntity =
-                    InAppMessageEntity(inAppMessageId ?: "", inAppMessageAsString)
                 val inAppMessageDao = db.inAppMessageDao()
-                inAppMessageDao.insert(inAppMessageEntity)
+                inAppMessageDao.markAsSeen(inAppMessageId)
             } catch (e: Exception) {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
-                    "Error inserting in-app message: ${e.message}"
+                    "Failed to mark in-app message as seen in the local database: ${e.message}"
                 )
             } finally {
                 //db.close()
@@ -125,7 +189,6 @@ class InAppMessageHandler(private val context: Context) {
         context.startActivity(intent)
     }
 
-
     fun showInAppMessages(limit: Int? = 1) {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         coroutineScope.launch {
@@ -135,7 +198,9 @@ class InAppMessageHandler(private val context: Context) {
                     withContext(Dispatchers.Main) {
                         for (inAppMessageEntry in inAppMessageEntries) {
                             if (inAppMessageEntry.inAppMessageAsString != null) {
-                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
+                                val inAppMessageActivity = InAppMessageBaseActivity()
+//                                inAppMessageActivity.setFinishListener(this)
+//                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
                             }
                         }
                     }
@@ -196,6 +261,13 @@ class InAppMessageHandler(private val context: Context) {
             ""
         } finally {
             db.close()
+        }
+    }
+
+    override fun onInAppMessageClosed(inAppMessageId: String) {
+        markIAMReadInLocalAndServer(
+            inAppMessageId
+        ) { inAppMessageData: String?, errorMessage: String? ->
         }
     }
 
