@@ -24,7 +24,7 @@ interface InAppMessageDao {
     suspend fun getMessages(limit: Int): List<InAppMessageEntity>
 
     @Query("UPDATE in_app_messages SET isSeen = 1 WHERE inAppMessageId = :id")
-    suspend fun markAsSeen(id: Long)
+    suspend fun markAsSeen(id: String)
 
     @Query("UPDATE in_app_messages SET isSeen = 0")
     suspend fun resetIsSeenToFalse()

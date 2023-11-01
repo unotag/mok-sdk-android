@@ -232,10 +232,10 @@ class MokSDK private constructor(private val context: Context) {
     //region In App messages
 
     fun requestIAMFromServerAndShow() {
-        val inAppMessageHandler = InAppMessageHandler(context)
-        inAppMessageHandler?.fetchIAMFromServerAndSaveToDB(
-            "MOASDK_001"
+        val inAppMessageHandler = InAppMessageHandler(context, "MOASDK_001")
+        inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
         ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
+
             inAppMessageHandler.showInAppMessages(30)
         }
     }
