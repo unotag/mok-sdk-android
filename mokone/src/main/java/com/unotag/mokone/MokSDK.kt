@@ -2,17 +2,17 @@ package com.unotag.mokone
 
 import android.app.Activity
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.os.Bundle
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.core.MokSDKConstants
+import com.unotag.mokone.helper.ManifestReader
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
 import com.unotag.mokone.inAppMessage.data.InAppMessageData
-import com.unotag.mokone.network.MokApiCallTask
+import com.unotag.mokone.managers.EventLogManager
+import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
+import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
 import org.json.JSONObject
 
@@ -42,40 +42,18 @@ class MokSDK private constructor(private val context: Context) {
 
     fun initMokSDK(isProductionEvn: Boolean) {
         MokSDKConstants.IS_PRODUCTION_ENV = isProductionEvn
-        val bundle: Bundle? = getApiKeyFromManifest(context)
-        if (bundle != null) {
-            val readKey = bundle.getString("MOK_READ_KEY")
-            val writeKey = bundle.getString("MOK_WRITE_KEY")
-            if (readKey != null || writeKey != null) {
-                MokSDKConstants.READ_KEY = readKey!!
-                MokSDKConstants.WRITE_KEY = writeKey!!
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "READ_KEY : ${MokSDKConstants.READ_KEY}")
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "WRITE_KEY : ${MokSDKConstants.WRITE_KEY}")
-            } else {
-                MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
-            }
+
+        val manifestReader = ManifestReader(context)
+        val readKey = manifestReader.readString(ManifestReader.MOK_READ_KEY)
+        val writeKey = manifestReader.readString(ManifestReader.MOK_WRITE_KEY)
+        if (readKey.isNotEmpty() || writeKey.isNotEmpty()) {
+            MokSDKConstants.READ_KEY = readKey
+            MokSDKConstants.WRITE_KEY = writeKey
         } else {
-            MokLogger.log(MokLogger.LogLevel.ERROR, "Manifest meta is null")
+            MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
         }
 
-
-        //TODO: when user id is not avail
         requestIAMFromServerAndShow()
-    }
-
-    //TODO: make this private before going live
-    fun getApiKeyFromManifest(context: Context): Bundle? {
-        return try {
-            val appInfo: ApplicationInfo =
-                context.applicationContext.packageManager.getApplicationInfo(
-                    context.packageName, PackageManager.GET_META_DATA
-                )
-            appInfo.metaData
-        } catch (e: PackageManager.NameNotFoundException) {
-            // Handle the exception if the package name is not found
-            MokLogger.log(MokLogger.LogLevel.ERROR, "NameNotFoundException")
-            null
-        }
     }
 
 
@@ -122,121 +100,55 @@ class MokSDK private constructor(private val context: Context) {
 //endregion
 
 
-//region UpdateUser, triggerWorkflow, logActivity requestInAppMessageDataFromServer API
+    //region UpdateUser, logActivity
     fun updateUser(
         userId: String,
         data: JSONObject?,
         callback: (success: JSONObject?, errorMessage: String?) -> Unit
     ) {
-        val apiCallTask = MokApiCallTask()
-        apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_REGISTRATION + userId,
-            MokApiCallTask.HttpMethod.PATCH,
-            MokApiCallTask.MokRequestMethod.WRITE,
-            data
-        ) { result ->
-            when (result) {
-                is MokApiCallTask.ApiResult.Success -> {
-                    val response = result.response
-                    callback(response, null)
-                }
-
-                is MokApiCallTask.ApiResult.Error -> {
-                    val error = result.exception
-                    callback(null, error.localizedMessage)
-                }
-
-                else -> {
-                    callback(null, "Something went wrong")
-                }
-            }
-        }
+        val userSessionManager = UserSessionManager(context)
+        userSessionManager.requestUpdateUser(userId, data, callback)
     }
 
-    fun triggerWorkflow(
-        workflowId: String,
-        data: JSONObject,
-        callback: (success: JSONObject?, error: String?) -> Unit
-    ) {
-        val apiCallTask = MokApiCallTask()
-        apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_TRIGGER_WORKFLOW + workflowId,
-            MokApiCallTask.HttpMethod.POST,
-            MokApiCallTask.MokRequestMethod.WRITE,
-            data
-        ) { result ->
-            when (result) {
-                is MokApiCallTask.ApiResult.Success -> {
-                    val response = result.response
-                    callback(response, null)
-                }
-
-                is MokApiCallTask.ApiResult.Error -> {
-                    val error = result.exception
-                    callback(null, error.localizedMessage)
-                }
-
-                else -> {
-                    callback(null, "Something went wrong")
-                }
-
-            }
-        }
+    fun getUserId(): String{
+        val userSessionManager = UserSessionManager(context)
+        return userSessionManager.getPersistenceUserId()
     }
 
-    fun logActivity(
-        eventName: String,
+    fun logoutUser(){
+        val userSessionManager = UserSessionManager(context)
+        userSessionManager.requestLogoutUser()
+    }
+
+    fun logEvent(
         userId: String,
+        eventName: String,
         parameter: JSONObject? = null,
         callback: (success: JSONObject?, error: String?) -> Unit
-    ) {
-        val data = JSONObject()
-        data.put("event_name", eventName)
-        parameter?.keys()?.forEach { key ->
-            data.put(key, parameter.get(key))
-        }
-
-        val apiCallTask = MokApiCallTask()
-        apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_ADD_USER_ACTIVITY + userId,
-            MokApiCallTask.HttpMethod.POST,
-            MokApiCallTask.MokRequestMethod.WRITE,
-            data
-        ) { result ->
-            when (result) {
-                is MokApiCallTask.ApiResult.Success -> {
-                    val response = result.response
-                    callback(response, null)
-                    MokLogger.log(
-                        MokLogger.LogLevel.DEBUG, "User activity logged successfully"
-
-                    )
-                }
-
-                is MokApiCallTask.ApiResult.Error -> {
-                    val error = result.exception
-                    callback(null, error.localizedMessage)
-                }
-
-                else -> {
-                    callback(null, "Something went wrong")
-
-                }
-            }
-        }
+    ){
+        val eventLogManager = EventLogManager()
+        eventLogManager.requestLogEvent(userId, eventName, parameter, callback)
     }
-
 
 //endregion
 
     //region In App messages
+     fun requestIAMFromServerAndShow() {
+        val sharedPreferencesService = SharedPreferencesService(context)
+        val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
+        if (userId.isNotEmpty()) {
+            val inAppMessageHandler = InAppMessageHandler(context, userId)
+            inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
+            ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
+                inAppMessageHandler.showInAppMessages(5)
+                inAppMessageHandler.markIAMReadInLocalAndServer("118506", null)
 
-    fun requestIAMFromServerAndShow() {
-        val inAppMessageHandler = InAppMessageHandler(context, "MOASDK_001")
-        inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
-        ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
-
-            inAppMessageHandler.showInAppMessages(30)
+            }
+        } else {
+            MokLogger.log(
+                MokLogger.LogLevel.ERROR,
+                "User is not registered, kindly register the user with a unique CLIENT_ID"
+            )
         }
     }
 

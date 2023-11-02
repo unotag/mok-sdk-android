@@ -8,7 +8,6 @@ import com.unotag.mokone.db.InAppMessageEntity
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
-import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivityFinishListener
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.utils.MokLogger
@@ -21,8 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-class InAppMessageHandler(private val context: Context, private val userId: String) :
-    InAppMessageBaseActivityFinishListener {
+class InAppMessageHandler(private val context: Context, private val userId: String) {
 
 
     fun fetchIAMFromServerAndSaveToDB(
@@ -108,7 +106,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
 
     fun markIAMReadInLocalAndServer(
         inAppMessageId: String,
-        callback: (inAppMessageData: String?, error: String?) -> Unit
+        callback: ((inAppMessageData: String?, error: String?) -> Unit)?
     ) {
         val apiCallTask = MokApiCallTask()
         apiCallTask.performApiCall(
@@ -120,7 +118,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                 is MokApiCallTask.ApiResult.Success -> {
                     val response = result.response
                     try {
-                        callback(response.toString(), null)
+                        callback?.invoke(response.toString(), null)
 
                         markIAMAsSeenLocally(inAppMessageId)
 
@@ -129,17 +127,18 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                             "In-App Message mark as read successfully"
                         )
                     } catch (e: Exception) {
-                        callback(null, "Failed to parse the API response")
+                        callback?.invoke(null, "Failed to parse the API response")
+
                     }
                 }
 
                 is MokApiCallTask.ApiResult.Error -> {
                     val error = result.exception
-                    callback(null, error.localizedMessage)
+                    callback?.invoke(null, error.localizedMessage)
                 }
 
                 else -> {
-                    callback(null, "Something went wrong")
+                    callback?.invoke(null, "Something went wrong")
                 }
             }
         }
@@ -197,10 +196,8 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                 if (inAppMessageEntries != null) {
                     withContext(Dispatchers.Main) {
                         for (inAppMessageEntry in inAppMessageEntries) {
-                            if (inAppMessageEntry.inAppMessageAsString != null) {
-                                val inAppMessageActivity = InAppMessageBaseActivity()
-//                                inAppMessageActivity.setFinishListener(this)
-//                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
+                            if (inAppMessageEntry.inAppMessageAsString != null && !inAppMessageEntry.isSeen) {
+                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
                             }
                         }
                     }
@@ -215,12 +212,16 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
 
-    suspend fun deleteAllInAppMessages() {
+    fun deleteAllInAppMessages(callback: ((success: String?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
         try {
-            val inAppMessageDao = db.inAppMessageDao()
-            inAppMessageDao.deleteAllInAppMessages()
-            MokLogger.log(MokLogger.LogLevel.INFO, "All in app messages deleted successfully")
+            CoroutineScope(Dispatchers.IO).launch {
+                val inAppMessageDao = db.inAppMessageDao()
+                inAppMessageDao.deleteAllInAppMessages()
+                withContext(Dispatchers.Main){
+                    MokLogger.log(MokLogger.LogLevel.INFO, "All in app messages deleted successfully")
+                }
+            }
         } catch (e: Exception) {
             MokLogger.log(
                 MokLogger.LogLevel.ERROR, "Error deleting all in-app messages: ${e.message}"
@@ -230,11 +231,19 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-    suspend fun resetIsSeenToUnSeen() {
+     fun resetIsSeenToUnSeen(callback: ((success: String?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
         try {
-            val inAppMessageDao = db.inAppMessageDao()
-            //inAppMessageDao.resetIsSeenToFalse()
+            CoroutineScope(Dispatchers.IO).launch {
+                val inAppMessageDao = db.inAppMessageDao()
+                inAppMessageDao.resetIsSeenToFalse()
+                withContext(Dispatchers.Main) {
+                    MokLogger.log(
+                        MokLogger.LogLevel.INFO,
+                        "All in app messages resetIsSeenToUnSeen successfully"
+                    )
+                }
+            }
             MokLogger.log(
                 MokLogger.LogLevel.INFO,
                 "All in app messages resetIsSeenToUnSeen successfully"
@@ -248,27 +257,30 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-    suspend fun getIAMCount(): String {
+     fun getIAMCount(callback: ((success: String?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
-        return try {
-            val inAppMessageDao = db.inAppMessageDao()
-            val count = inAppMessageDao.getMessageCount()
-            MokLogger.log(MokLogger.LogLevel.INFO, "IAM count: $count")
-            count.toString()
+         try {
+            CoroutineScope(Dispatchers.IO).launch {
+                val inAppMessageDao = db.inAppMessageDao()
+                val count = inAppMessageDao.getMessageCount()
+                withContext(Dispatchers.Main){
+                    MokLogger.log(MokLogger.LogLevel.INFO, "IAM count: $count")
+                    callback?.invoke(count.toString(), null)
+                }
+            }
         } catch (e: Exception) {
             MokLogger.log(MokLogger.LogLevel.ERROR, "Error getting IAM count: ${e.message}")
-            ""
+             callback?.invoke(null, e.localizedMessage)
         } finally {
             db.close()
         }
     }
 
-    override fun onInAppMessageClosed(inAppMessageId: String) {
-        markIAMReadInLocalAndServer(
-            inAppMessageId
-        ) { inAppMessageData: String?, errorMessage: String? ->
-        }
-    }
-
 }
+
+
+
+
+
+

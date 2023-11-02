@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.unotag.mokone.MokSDK
-import com.unotag.mokone.utils.MokLogger
 import one.mok.databinding.FragmentSettingsBinding
 
 class SettingsFragment : Fragment() {
@@ -39,19 +38,19 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val bundle: Bundle? = mMokSDK.getApiKeyFromManifest(mActivity)
-        if (bundle != null) {
-            val readKey = bundle.getString("MOK_READ_KEY")
-            val writeKey = bundle.getString("MOK_WRITE_KEY")
-            if (readKey == null || writeKey == null) {
-                MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
-            } else {
-                binding.readKeyEt.setText(readKey)
-                binding.writeKeyEt.setText(writeKey)
-            }
-        } else {
-            MokLogger.log(MokLogger.LogLevel.ERROR, "Manifest meta is null")
-        }
+//        val bundle: Bundle? = mMokSDK.getApiKeyFromManifest(mActivity)
+//        if (bundle != null) {
+//            val readKey = bundle.getString("MOK_READ_KEY")
+//            val writeKey = bundle.getString("MOK_WRITE_KEY")
+//            if (readKey == null || writeKey == null) {
+//                MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
+//            } else {
+//                binding.readKeyEt.setText(readKey)
+//                binding.writeKeyEt.setText(writeKey)
+//            }
+//        } else {
+//            MokLogger.log(MokLogger.LogLevel.ERROR, "Manifest meta is null")
+//        }
 
 
         binding.hostUrlTv.text = "Host URL: " + mMokSDK.getHostUrl()
