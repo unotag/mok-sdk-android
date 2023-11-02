@@ -107,7 +107,7 @@ class DashboardFragment : Fragment() {
         binding.fetchInAppMsgBtn.setOnClickListener {
             val userId = binding.userNameEt.text
             if (!userId.isNullOrBlank() ) {
-                fetchInAppMessageData(userId.toString());
+                fetchInAppMessageData();
             } else {
                 showToast("User ID or Event name cannot be blank")
             }
@@ -170,7 +170,7 @@ class DashboardFragment : Fragment() {
 
         if (params.isNotEmpty()) {
             val jsonBody = JSONObject(params)
-            mokSDK.logActivity(eventName, userId, jsonBody) { success, errorMessage ->
+            mokSDK.logEvent(eventName, userId, jsonBody) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
@@ -184,7 +184,7 @@ class DashboardFragment : Fragment() {
             }
         } else {
             // Handle the case when params is empty (null or "")
-            mokSDK.logActivity(eventName, userId) { success, errorMessage ->
+            mokSDK.logEvent(eventName, userId) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
@@ -215,17 +215,9 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun fetchInAppMessageData(userId: String) {
+    private fun fetchInAppMessageData() {
         val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-//        mokSDK.requestInAppMessageDataFromServer(userId) { success, errorMessage ->
-//            if (success != null) {
-//                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM fetched : $success")
-//            } else {
-//                if (errorMessage != null) {
-//                    MokLogger.log(MokLogger.LogLevel.ERROR, "IAM fetch error : $errorMessage")
-//                }
-//            }
-//        }
+        mokSDK.requestIAMFromServerAndShow()
     }
 
     private fun updateFcmToken(userId: String, fcmToken: String?) {

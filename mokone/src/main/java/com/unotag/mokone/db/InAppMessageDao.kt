@@ -17,9 +17,6 @@ interface InAppMessageDao {
     @Query("SELECT * FROM in_app_messages")
     suspend fun getAllInAppMessages(): List<InAppMessageEntity>
 
-    @Query("SELECT * FROM in_app_messages ORDER BY inAppMessageId DESC LIMIT 1")
-    suspend fun getLatestMessage(): InAppMessageEntity?
-
     @Query("SELECT * FROM in_app_messages ORDER BY inAppMessageId DESC LIMIT :limit")
     suspend fun getMessages(limit: Int): List<InAppMessageEntity>
 

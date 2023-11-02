@@ -1,17 +1,27 @@
 package com.unotag.mokone.inAppMessage.ui
 
+import android.content.Intent
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.unotag.mokone.R
+import com.unotag.mokone.inAppMessage.InAppMessageHandler
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 
-class InAppMessageBaseActivity() : AppCompatActivity() {
+class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener {
 
+    private lateinit var mInAppMessageId: String
 
-    private lateinit var  mInAppMessageId : String
-    private lateinit var inAppMessageBaseActivityFinishListener : InAppMessageBaseActivityFinishListener
-
+    private val fullScreenWebViewResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val data = result.data
+                val userId = data?.getStringExtra("user_id")
+                val markAsSeen = data?.getBooleanExtra("mark_as_seen", false)
+                markInAppMessageAsRead(userId)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,46 +33,48 @@ class InAppMessageBaseActivity() : AppCompatActivity() {
 
         this.mInAppMessageId = inAppMessageItem.inAppId ?: "NA"
 
-        popupDecisionEngine(inAppMessageItem)
+        //popupDecisionEngine(inAppMessageItem)
+        launchIAMFullScreenWebViewActivity(inAppMessageItemString!!)
+
     }
 
-    fun setFinishListener(listener: InAppMessageBaseActivityFinishListener) {
-        inAppMessageBaseActivityFinishListener = listener
-    }
 
-
-    private fun popupDecisionEngine(inAppMessageItem: InAppMessageItem) {
+    private fun popupDecisionEngine(inAppMessageItemString: String, inAppMessageItem: InAppMessageItem) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> {
                 //TODO: create title, image, body popup
-                loadIAMWebViewDialog(inAppMessageItem)
+                launchIAMWebViewDialog(inAppMessageItem)
             }
+
             "bottom_sheet" -> {
                 //TODO: create title, image, body popup
-                loadIAMWebViewBottomSheet()
+                launchIAMWebViewBottomSheet(inAppMessageItemString,inAppMessageItem)
             }
+
             "full_page" -> {
-                //TODO: create full screen frag which acc web url
-
+                launchIAMFullScreenWebViewActivity(inAppMessageItemString)
             }
+
             "pip_video" -> {
-
             }
+
             else -> {
-                loadIAMWebViewDialog(inAppMessageItem)
+                launchIAMWebViewDialog(inAppMessageItem)
             }
         }
     }
 
-    private fun loadIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
+    private fun launchIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
+            markInAppMessageAsRead(inAppMessageItem.clientId)
             finish()
         }
         dialog.show()
     }
 
-    private fun loadIAMWebViewBottomSheet() {
+
+    private fun launchIAMWebViewBottomSheet(inAppMessageItemString: String, inAppMessageItem: InAppMessageItem) {
         val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment()
 
         // Set the listener for the fragment
@@ -77,9 +89,32 @@ class InAppMessageBaseActivity() : AppCompatActivity() {
         )
     }
 
+    private fun launchIAMFullScreenWebViewActivity(inAppMessageItemString: String) {
+        val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
+        intent.putExtra("in_app_message_data", inAppMessageItemString)
+        fullScreenWebViewResultLauncher.launch(intent)
+    }
+
+
+    private fun markInAppMessageAsRead(userId: String?) {
+        if (userId != null) {
+            val inAppMessageHandler = InAppMessageHandler(this, userId)
+            inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
+        }
+    }
+
+
+    override fun onDismiss() {
+        // TODO("Not yet implemented")
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
 }
 
 
-interface InAppMessageBaseActivityFinishListener{
-   fun onInAppMessageClosed(inAppMessageId: String)
+interface InAppMessageBaseActivityFinishListener {
+    fun onInAppMessageClosed(inAppMessageId: String)
 }
