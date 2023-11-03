@@ -5,5 +5,9 @@
     android:layout_height="match_parent"
     tools:context=".inAppMessage.ui.IAMWebViewBottomSheetFragment">
 
+    <WebView
+        android:id="@+id/web_view_bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

@@ -50,7 +50,7 @@ data class JsonData(
     @SerializedName("image")
     val image: String?, // You can replace with the actual type
     @SerializedName("icon")
-    val icon: String?, // You can replace with the actual type
+    val icon: String?,
     @SerializedName("category")
     val category: String?,
     @SerializedName("html")
