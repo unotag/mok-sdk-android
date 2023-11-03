@@ -8,18 +8,28 @@ import com.google.gson.Gson
 import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
+import com.unotag.mokone.utils.MokLogger
+
+
+enum class MessageType {
+    HTML,
+    NORMAL,
+    WEB,
+    UNKNOWN
+}
 
 class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener {
 
     private lateinit var mInAppMessageId: String
+    private lateinit var mUserId: String
 
     private val fullScreenWebViewResultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val data = result.data
-                val userId = data?.getStringExtra("user_id")
                 val markAsSeen = data?.getBooleanExtra("mark_as_seen", false)
-                markInAppMessageAsRead(userId)
+                markInAppMessageAsRead()
+                finish()
             }
         }
 
@@ -32,62 +42,90 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         val inAppMessageItem = Gson().fromJson(inAppMessageItemString, InAppMessageItem::class.java)
 
         this.mInAppMessageId = inAppMessageItem.inAppId ?: "NA"
+        this.mUserId = inAppMessageItem.clientId ?: "NA"
 
-        //popupDecisionEngine(inAppMessageItem)
-        launchIAMFullScreenWebViewActivity(inAppMessageItemString!!)
-
+        if (inAppMessageItemString != null) {
+            popupTypeDecisionEngine(inAppMessageItemString, inAppMessageItem)
+        }
     }
 
 
-    private fun popupDecisionEngine(inAppMessageItemString: String, inAppMessageItem: InAppMessageItem) {
-        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
-            "normal" -> {
-                //TODO: create title, image, body popup
-                launchIAMWebViewDialog(inAppMessageItem)
-            }
+    private fun popupTypeDecisionEngine(
+        inAppMessageItemString: String,
+        inAppMessageItem: InAppMessageItem
+    ) {
+        val isHtmlType: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
+        val isNormalType: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
+        val isWebSiteType: Boolean =
+            !inAppMessageItem.jsonData?.popupConfigs?.webUrl.isNullOrEmpty()
 
-            "bottom_sheet" -> {
-                //TODO: create title, image, body popup
-                launchIAMWebViewBottomSheet(inAppMessageItemString,inAppMessageItem)
-            }
+        val messageType = determineMessageType(isHtmlType, isNormalType, isWebSiteType)
 
-            "full_page" -> {
+        when (messageType) {
+            MessageType.HTML, MessageType.NORMAL, MessageType.UNKNOWN -> {
+                popupStyleDecisionEngine(
+                    inAppMessageItemString,
+                    inAppMessageItem
+                )
+            }
+            MessageType.WEB -> {
                 launchIAMFullScreenWebViewActivity(inAppMessageItemString)
-            }
-
-            "pip_video" -> {
-            }
-
-            else -> {
-                launchIAMWebViewDialog(inAppMessageItem)
             }
         }
     }
 
+
+    private fun determineMessageType(
+        isHtmlType: Boolean,
+        isNormalType: Boolean,
+        isWebSiteType: Boolean
+    ): MessageType {
+        return when {
+            isHtmlType -> MessageType.HTML
+            !isHtmlType && isNormalType && isWebSiteType -> MessageType.NORMAL
+            !isHtmlType && !isNormalType && isWebSiteType -> MessageType.WEB
+            else -> MessageType.UNKNOWN
+        }
+    }
+
+    private fun popupStyleDecisionEngine(
+        inAppMessageItemString: String,
+        inAppMessageItem: InAppMessageItem
+    ) {
+        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+            "normal" -> launchIAMWebViewDialog(inAppMessageItem)
+            "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItemString, inAppMessageItem)
+            "full_page" -> { }
+            "pip_video" -> { }
+            else -> launchIAMWebViewDialog(inAppMessageItem)
+        }
+    }
+
+
     private fun launchIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
-            markInAppMessageAsRead(inAppMessageItem.clientId)
+            markInAppMessageAsRead()
             finish()
         }
         dialog.show()
     }
 
 
-    private fun launchIAMWebViewBottomSheet(inAppMessageItemString: String, inAppMessageItem: InAppMessageItem) {
+    private fun launchIAMWebViewBottomSheet(
+        inAppMessageItemString: String,
+        inAppMessageItem: InAppMessageItem
+    ) {
         val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment()
-
-        // Set the listener for the fragment
         iAMWebViewBottomSheetFragment.setOnDismissListener(this)
-
-        // Prevent dismissal when clicked outside
         iAMWebViewBottomSheetFragment.isCancelable = false
-
         iAMWebViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMWebViewBottomSheetFragment.tag
         )
     }
+
+
 
     private fun launchIAMFullScreenWebViewActivity(inAppMessageItemString: String) {
         val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
@@ -96,25 +134,23 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
 
-    private fun markInAppMessageAsRead(userId: String?) {
-        if (userId != null) {
-            val inAppMessageHandler = InAppMessageHandler(this, userId)
+    private fun markInAppMessageAsRead() {
+        if (mUserId.isNotEmpty()) {
+            val inAppMessageHandler = InAppMessageHandler(this, mUserId)
             inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
+        } else {
+            MokLogger.log(MokLogger.LogLevel.ERROR, "User Id is null, contact mok team")
         }
     }
 
 
     override fun onDismiss() {
         // TODO("Not yet implemented")
+        print("onDismiss called ##################################")
     }
 
 
     override fun onDestroy() {
         super.onDestroy()
     }
-}
-
-
-interface InAppMessageBaseActivityFinishListener {
-    fun onInAppMessageClosed(inAppMessageId: String)
 }

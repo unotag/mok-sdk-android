@@ -1,6 +1,7 @@
 package com.unotag.mokone.inAppMessage.ui
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
@@ -37,6 +38,14 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         binding.fullScreenWebview.settings.javaScriptEnabled = true
         binding.fullScreenWebview.loadUrl(url)
     }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val resultIntent = Intent()
+        setResult(RESULT_OK, resultIntent)
+        finish()
+        return true
+    }
+
 
 
 

@@ -30,6 +30,4 @@ class IAMBottomSheetFragment : BottomSheetDialogFragment() {
         binding = FragmentIAMBottomSheetBinding.inflate(inflater, container, false)
         return binding.root
     }
-
-
 }

@@ -124,7 +124,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
 
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
-                            "In-App Message mark as read successfully"
+                            "In-App Message mark as read successfully in server"
                         )
                     } catch (e: Exception) {
                         callback?.invoke(null, "Failed to parse the API response")
@@ -152,6 +152,10 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
             try {
                 val inAppMessageDao = db.inAppMessageDao()
                 inAppMessageDao.markAsSeen(inAppMessageId)
+                MokLogger.log(
+                    MokLogger.LogLevel.DEBUG,
+                    "In-App Message mark as read successfully in local"
+                )
             } catch (e: Exception) {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
@@ -169,7 +173,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
 
         return try {
             val inAppMessageDao = db.inAppMessageDao()
-            inAppMessageDao.getMessages(limit)
+            inAppMessageDao.getUnseenMessages(limit)
         } catch (e: Exception) {
             MokLogger.log(
                 MokLogger.LogLevel.ERROR,

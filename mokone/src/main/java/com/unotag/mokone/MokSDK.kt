@@ -141,8 +141,6 @@ class MokSDK private constructor(private val context: Context) {
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
                 inAppMessageHandler.showInAppMessages(5)
-                inAppMessageHandler.markIAMReadInLocalAndServer("118506", null)
-
             }
         } else {
             MokLogger.log(
