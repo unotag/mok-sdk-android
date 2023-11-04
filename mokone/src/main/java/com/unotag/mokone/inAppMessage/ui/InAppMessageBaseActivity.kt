@@ -116,9 +116,9 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         inAppMessageItemString: String,
         inAppMessageItem: InAppMessageItem
     ) {
-        val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment()
+        val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment.newInstance(inAppMessageItemString)
         iAMWebViewBottomSheetFragment.setOnDismissListener(this)
-        iAMWebViewBottomSheetFragment.isCancelable = false
+        iAMWebViewBottomSheetFragment.isCancelable = true
         iAMWebViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMWebViewBottomSheetFragment.tag
