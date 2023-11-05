@@ -30,7 +30,7 @@ class IAMWebViewBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var mInAppMessageItem : InAppMessageItem
 
     private lateinit var binding: FragmentIAMWebviewBottomSheetBinding
-    private var dismissListener: OnIAMPopupDismissListener? = null
+    private lateinit var dismissListener: OnIAMPopupDismissListener
 
     fun setOnDismissListener(listener: OnIAMPopupDismissListener) {
         dismissListener = listener
@@ -45,8 +45,6 @@ class IAMWebViewBottomSheetFragment : BottomSheetDialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-
         arguments?.let {
             val inAppMessageItemString = it.getString(ARG_IN_APP_MESSAGE_DATA)
             mInAppMessageItem = Gson().fromJson(inAppMessageItemString, InAppMessageItem::class.java)
@@ -61,6 +59,10 @@ class IAMWebViewBottomSheetFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mInAppMessageItem.jsonData?.html?.let { initWebView(it) }
+
+        binding.closeIv.setOnClickListener {
+            dismiss()
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")

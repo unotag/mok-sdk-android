@@ -103,6 +103,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
 
 
     private fun launchIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewDialog launched")
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
             markInAppMessageAsRead()
@@ -116,6 +117,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         inAppMessageItemString: String,
         inAppMessageItem: InAppMessageItem
     ) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewBottomSheet launched")
         val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment.newInstance(inAppMessageItemString)
         iAMWebViewBottomSheetFragment.setOnDismissListener(this)
         iAMWebViewBottomSheetFragment.isCancelable = true
@@ -128,6 +130,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
 
 
     private fun launchIAMFullScreenWebViewActivity(inAppMessageItemString: String) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewActivity launched")
         val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
         intent.putExtra("in_app_message_data", inAppMessageItemString)
         fullScreenWebViewResultLauncher.launch(intent)
@@ -145,8 +148,8 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
 
 
     override fun onDismiss() {
-        // TODO("Not yet implemented")
-        print("onDismiss called ##################################")
+        markInAppMessageAsRead()
+        finish()
     }
 
 
