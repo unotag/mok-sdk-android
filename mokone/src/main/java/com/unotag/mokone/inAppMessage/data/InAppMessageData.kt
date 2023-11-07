@@ -1,6 +1,7 @@
 package com.unotag.mokone.inAppMessage.data
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class InAppMessageData(
     @SerializedName("data")
@@ -36,7 +37,7 @@ data class InAppMessageItem(
     val read: Boolean?,
     @SerializedName("type")
     val type: String? // You can replace with the actual type
-)
+) : Serializable
 
 data class JsonData(
     @SerializedName("popup_configs")
@@ -55,7 +56,7 @@ data class JsonData(
     val category: String?,
     @SerializedName("html")
     val html: String?,
-    )
+    ) : Serializable
 
 data class PopupConfigs(
     @SerializedName("sound")
@@ -76,4 +77,4 @@ data class PopupConfigs(
     val startTime: String?,
     @SerializedName("end_time")
     val endTime: String?
-)
+): Serializable

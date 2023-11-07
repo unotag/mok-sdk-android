@@ -103,7 +103,7 @@ class MokSDK private constructor(private val context: Context) {
 //endregion
 
 
-    //region UpdateUser, logActivity
+    //region UpdateUser, logEvent
     fun updateUser(
         userId: String,
         data: JSONObject?,

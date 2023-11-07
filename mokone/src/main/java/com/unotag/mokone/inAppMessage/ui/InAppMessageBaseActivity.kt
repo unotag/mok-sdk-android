@@ -1,10 +1,10 @@
 package com.unotag.mokone.inAppMessage.ui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
 import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
@@ -37,21 +37,24 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_in_app_message_base)
 
-        val inAppMessageItemString = intent.getStringExtra("in_app_message_data")
+        val inAppMessageItem: InAppMessageItem? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getSerializableExtra("in_app_message_data", InAppMessageItem::class.java)
+            } else {
+                intent.getSerializableExtra("in_app_message_data") as InAppMessageItem
+            }
 
-        val inAppMessageItem = Gson().fromJson(inAppMessageItemString, InAppMessageItem::class.java)
 
-        this.mInAppMessageId = inAppMessageItem.inAppId ?: "NA"
-        this.mUserId = inAppMessageItem.clientId ?: "NA"
+        this.mInAppMessageId = inAppMessageItem?.inAppId ?: "NA"
+        this.mUserId = inAppMessageItem?.clientId ?: "NA"
 
-        if (inAppMessageItemString != null) {
-            popupTypeDecisionEngine(inAppMessageItemString, inAppMessageItem)
+        if (inAppMessageItem != null) {
+            popupTypeDecisionEngine(inAppMessageItem)
         }
     }
 
 
     private fun popupTypeDecisionEngine(
-        inAppMessageItemString: String,
         inAppMessageItem: InAppMessageItem
     ) {
         val isHtmlType: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
@@ -63,13 +66,11 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
 
         when (messageType) {
             MessageType.HTML, MessageType.NORMAL, MessageType.UNKNOWN -> {
-                popupStyleDecisionEngine(
-                    inAppMessageItemString,
-                    inAppMessageItem
-                )
+                popupStyleDecisionEngine(inAppMessageItem)
             }
+
             MessageType.WEB -> {
-                launchIAMFullScreenWebViewActivity(inAppMessageItemString)
+                launchIAMFullScreenWebViewActivity(inAppMessageItem)
             }
         }
     }
@@ -89,14 +90,13 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
     private fun popupStyleDecisionEngine(
-        inAppMessageItemString: String,
         inAppMessageItem: InAppMessageItem
     ) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> launchIAMWebViewDialog(inAppMessageItem)
-            "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItemString, inAppMessageItem)
-            "full_page" -> { }
-            "pip_video" -> { }
+            "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItem)
+            "full_page" -> {}
+            "pip_video" -> {}
             else -> launchIAMWebViewDialog(inAppMessageItem)
         }
     }
@@ -114,11 +114,11 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
 
 
     private fun launchIAMWebViewBottomSheet(
-        inAppMessageItemString: String,
         inAppMessageItem: InAppMessageItem
     ) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewBottomSheet launched")
-        val iAMWebViewBottomSheetFragment = IAMWebViewBottomSheetFragment.newInstance(inAppMessageItemString)
+        val iAMWebViewBottomSheetFragment =
+            IAMWebViewBottomSheetFragment.newInstance(inAppMessageItem)
         iAMWebViewBottomSheetFragment.setOnDismissListener(this)
         iAMWebViewBottomSheetFragment.isCancelable = true
         iAMWebViewBottomSheetFragment.show(
@@ -128,11 +128,10 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
 
-
-    private fun launchIAMFullScreenWebViewActivity(inAppMessageItemString: String) {
+    private fun launchIAMFullScreenWebViewActivity(inAppMessageItem: InAppMessageItem) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewActivity launched")
         val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
-        intent.putExtra("in_app_message_data", inAppMessageItemString)
+        intent.putExtra("in_app_message_data", inAppMessageItem)
         fullScreenWebViewResultLauncher.launch(intent)
     }
 

@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.unotag.mokone.db.InAppMessageEntity
 import com.unotag.mokone.db.MokDb
 import com.unotag.mokone.inAppMessage.data.InAppMessageData
+import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
@@ -185,7 +186,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-    private fun launchIAMBaseActivity(inAppMessageItem: String) {
+    private fun launchIAMBaseActivity(inAppMessageItem: InAppMessageItem) {
         val intent = Intent(context, InAppMessageBaseActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.putExtra("in_app_message_data", inAppMessageItem)
@@ -200,8 +201,12 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                 if (inAppMessageEntries != null) {
                     withContext(Dispatchers.Main) {
                         for (inAppMessageEntry in inAppMessageEntries) {
-                            if (inAppMessageEntry.inAppMessageAsString != null && !inAppMessageEntry.isSeen) {
-                                launchIAMBaseActivity(inAppMessageEntry.inAppMessageAsString)
+                            if (!inAppMessageEntry.inAppMessageAsString.isNullOrEmpty()) {
+                                val inAppMessageItem = Gson().fromJson(
+                                    inAppMessageEntry.inAppMessageAsString,
+                                    InAppMessageItem::class.java
+                                )
+                                launchIAMBaseActivity(inAppMessageItem)
                             }
                         }
                     }
@@ -222,8 +227,11 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
             CoroutineScope(Dispatchers.IO).launch {
                 val inAppMessageDao = db.inAppMessageDao()
                 inAppMessageDao.deleteAllInAppMessages()
-                withContext(Dispatchers.Main){
-                    MokLogger.log(MokLogger.LogLevel.INFO, "All in app messages deleted successfully")
+                withContext(Dispatchers.Main) {
+                    MokLogger.log(
+                        MokLogger.LogLevel.INFO,
+                        "All in app messages deleted successfully"
+                    )
                 }
             }
         } catch (e: Exception) {
@@ -235,7 +243,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-     fun resetIsSeenToUnSeen(callback: ((success: String?, error: String?) -> Unit)?) {
+    fun resetIsSeenToUnSeen(callback: ((success: String?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
         try {
             CoroutineScope(Dispatchers.IO).launch {
@@ -261,21 +269,21 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-     fun getIAMCount(callback: ((success: String?, error: String?) -> Unit)?) {
+    fun getIAMCount(callback: ((success: String?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
-         try {
+        try {
             CoroutineScope(Dispatchers.IO).launch {
                 val inAppMessageDao = db.inAppMessageDao()
                 val count = inAppMessageDao.getMessageCount()
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     MokLogger.log(MokLogger.LogLevel.INFO, "IAM count: $count")
                     callback?.invoke(count.toString(), null)
                 }
             }
         } catch (e: Exception) {
             MokLogger.log(MokLogger.LogLevel.ERROR, "Error getting IAM count: ${e.message}")
-             callback?.invoke(null, e.localizedMessage)
+            callback?.invoke(null, e.localizedMessage)
         } finally {
             db.close()
         }
