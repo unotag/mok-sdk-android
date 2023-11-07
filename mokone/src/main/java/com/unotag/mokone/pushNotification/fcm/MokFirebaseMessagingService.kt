@@ -5,31 +5,26 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.unotag.mokone.R
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import com.unotag.mokone.utils.MokLogger
+import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
-
-//popup_configs={"number_of_times_view":"1","template_size":"1","sound":"1","number_of_seconds_view":"1","template_type":"spotlight","validity":"1"}
-//
-//            Full Page - Open Webview URL - Open it in complete app page
-//            PIP Video - Exoplayer Video
-//            Bottom Sheet - Open below
-//            Normal - Webview inside dialog box with raw html
-
-//            <option value="spotlight">Spotlight</option>
-//            <option value="pip_video">PIP Video</option>
-//            <option value="tooltip">Tooltip</option>
-//            <option value="coach_mark">Coach mark</option>
-//            <option value="bottom_sheet">Bottom sheet</option>
-//            <option value="normal">Normal</option>
-//            <option value="full_page">Full Page</option>
 
 class MokFirebaseMessagingService : FirebaseMessagingService() {
+
+//    private var bigLargeIcon: Bitmap? = null
+//    private var bigPicture: Bitmap? = null
+
 
     /**
      * Called when message is received.
@@ -54,18 +49,22 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
+            val title = remoteMessage.data["title"]
+            val body = remoteMessage.data["body"]
 
+            if (title.isNullOrEmpty()) {
+                   MokLogger.log(MokLogger.LogLevel.DEBUG, "THIS IS A IN APP MESG")
 
+                remoteMessage.data["get_in_app_msg_data"]
 
-            if (remoteMessage.data.containsKey("popup") &&
-                remoteMessage.data["popup"] == "true"
-            ) {
-                val notificationData = remoteMessage.data
-               // handleInAppNotification(notificationData)
-                //TODO: Remove this before going live
-                sendNotification(remoteMessage)
+            } else if (remoteMessage.data.containsKey("image")) {
+                val image = remoteMessage.data["image"]
+                val bigIcon = remoteMessage.data["icon"]
+                val bigPicture = getBitmapFromUrl(image)
+                val bigLargeIcon: Bitmap? = getBitmapFromUrl(bigIcon)
+                sendNotification(title, body, bigPicture, bigLargeIcon)
             } else {
-                sendNotification(remoteMessage)
+                sendNotification(title, body)
             }
 
             // Check if data needs to be processed by long running job
@@ -79,11 +78,10 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         // Check if message contains a notification payload.
-        remoteMessage.notification?.let {
-            MokLogger.log(MokLogger.LogLevel.DEBUG, "Message Notification Body: ${it.body}")
-            it.body?.let { body -> sendNotification(remoteMessage) }
-
-        }
+//        remoteMessage.notification?.let {
+//            MokLogger.log(MokLogger.LogLevel.DEBUG, "Message Notification Body: ${it.body}")
+//            it.body?.let { body -> sendNotification() }
+//        }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
@@ -139,49 +137,92 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         MokLogger.log(MokLogger.LogLevel.DEBUG, "sendRegistrationTokenToServer($token)")
     }
 
-    /**
-     * Create and show a simple notification containing the received FCM message.
-     *
-     * @param messageBody FCM message body received.
-     */
-    private fun sendNotification(remoteMessage: RemoteMessage) {
+    private fun sendNotification(
+        title: String?,
+        messageBody: String?,
+        bigPicture: Bitmap? = null,
+        bigLargeIcon: Bitmap? = null
+    ) {
         val requestCode = 0
-        val launchIntent =
-            applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
+        val launchIntent = getLaunchIntent()
+        val pendingIntent = getPendingIntent(launchIntent, requestCode)
+        val channelId = getString(R.string.default_notification_channel_id)
+        val notificationBuilder = buildNotification(title, messageBody, bigPicture, bigLargeIcon, channelId, pendingIntent)
+        notify(notificationBuilder)
+    }
+
+    private fun getLaunchIntent(): Intent? {
+        val launchIntent = applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
         launchIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(
+        return launchIntent
+    }
+
+    private fun getPendingIntent(intent: Intent?, requestCode: Int): PendingIntent? {
+        return PendingIntent.getActivity(
             this,
             requestCode,
-            launchIntent,
+            intent,
             PendingIntent.FLAG_IMMUTABLE,
         )
+    }
 
-        val channelId = "1"
+    private fun buildNotification(
+        title: String?,
+        messageBody: String?,
+        bigPicture: Bitmap?,
+        bigLargeIcon: Bitmap?,
+        channelId: String,
+        pendingIntent: PendingIntent?
+    ): NotificationCompat.Builder {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+
+        return NotificationCompat.Builder(this, channelId)
+            .setStyle(
+                NotificationCompat.BigPictureStyle()
+                    .bigPicture(bigPicture)
+                    .bigLargeIcon(bigLargeIcon)
+            )
             .setSmallIcon(NotificationRenderer.getSmallNotificationIcon())
-            .setContentTitle(remoteMessage.data["title"])
-            .setContentText(remoteMessage.data["body"])
+            .setContentTitle(title)
+            .setContentText(messageBody)
+            .setLargeIcon(bigLargeIcon)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
+    }
 
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun notify(notificationBuilder: NotificationCompat.Builder) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = notificationBuilder.build().channelId
             val channel = NotificationChannel(
-                channelId,
-                "Default",
-                NotificationManager.IMPORTANCE_HIGH,
+                channelId, "Default Channel",
+                NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(channel)
         }
+
         val notificationId = System.currentTimeMillis().toInt()
         notificationManager.notify(notificationId, notificationBuilder.build())
+    }
+
+
+    private fun getBitmapFromUrl(imageUrl: String?): Bitmap? {
+        return try {
+            val url = URL(imageUrl)
+            val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
+            connection.doInput = true
+            connection.connect()
+            val input: InputStream = connection.inputStream
+            BitmapFactory.decodeStream(input)
+        } catch (e: Exception) {
+            MokLogger.log(
+                MokLogger.LogLevel.ERROR,
+                "Error in getting notification image: " + e.localizedMessage
+            )
+            null
+        }
     }
 
 
@@ -204,7 +245,10 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
 //                }
 //            }
         } catch (e: Exception) {
-            MokLogger.log(MokLogger.LogLevel.ERROR, "Error handling in-app notification: ${e.message}")
+            MokLogger.log(
+                MokLogger.LogLevel.ERROR,
+                "Error handling in-app notification: ${e.message}"
+            )
         }
     }
 

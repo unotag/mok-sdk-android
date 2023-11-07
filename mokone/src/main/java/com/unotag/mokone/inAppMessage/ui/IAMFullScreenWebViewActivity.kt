@@ -2,34 +2,36 @@ package com.unotag.mokone.inAppMessage.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
 import com.unotag.mokone.databinding.ActivityIamfullScreenWebViewBinding
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
+import com.unotag.mokone.utils.MokLogger
 
 class IAMFullScreenWebViewActivity : AppCompatActivity() {
 
-    private lateinit var mInAppMessageId: String
 
     private lateinit var binding: ActivityIamfullScreenWebViewBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val inAppMessageItemString = intent.getStringExtra("in_app_message_data")
-
-        val inAppMessageItem = Gson().fromJson(inAppMessageItemString, InAppMessageItem::class.java)
-
-        this.mInAppMessageId = inAppMessageItem.inAppId ?: "NA"
-
+        val inAppMessageItem: InAppMessageItem? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getSerializableExtra("in_app_message_data", InAppMessageItem::class.java)
+            } else {
+                intent.getSerializableExtra("in_app_message_data") as InAppMessageItem
+            }
 
         binding = ActivityIamfullScreenWebViewBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
-        inAppMessageItem.jsonData?.popupConfigs?.webUrl?.let { initWebView(it) }
+        inAppMessageItem?.jsonData?.popupConfigs?.webUrl?.let { initWebView(it) } ?: run {
+            MokLogger.log(MokLogger.LogLevel.ERROR, "URL is null, update url from mok.one template")
+        }
     }
 
 
@@ -45,8 +47,4 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         finish()
         return true
     }
-
-
-
-
 }

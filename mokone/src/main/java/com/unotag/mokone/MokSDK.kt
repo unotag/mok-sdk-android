@@ -53,7 +53,10 @@ class MokSDK private constructor(private val context: Context) {
             MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
         }
 
-        requestIAMFromServerAndShow()
+        val inAppMessageHandler = InAppMessageHandler(context, "MOASDK_001")
+        inAppMessageHandler.showInAppMessages(5)
+
+       // requestIAMFromServerAndShow()
     }
 
 
@@ -100,7 +103,7 @@ class MokSDK private constructor(private val context: Context) {
 //endregion
 
 
-    //region UpdateUser, logActivity
+    //region UpdateUser, logEvent
     fun updateUser(
         userId: String,
         data: JSONObject?,
@@ -134,6 +137,7 @@ class MokSDK private constructor(private val context: Context) {
 
     //region In App messages
      fun requestIAMFromServerAndShow() {
+
         val sharedPreferencesService = SharedPreferencesService(context)
         val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
         if (userId.isNotEmpty()) {

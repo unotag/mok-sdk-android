@@ -170,7 +170,7 @@ class DashboardFragment : Fragment() {
 
         if (params.isNotEmpty()) {
             val jsonBody = JSONObject(params)
-            mokSDK.logEvent(eventName, userId, jsonBody) { success, errorMessage ->
+            mokSDK.logEvent(userId, eventName, jsonBody) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
@@ -184,7 +184,7 @@ class DashboardFragment : Fragment() {
             }
         } else {
             // Handle the case when params is empty (null or "")
-            mokSDK.logEvent(eventName, userId) { success, errorMessage ->
+            mokSDK.logEvent(userId,eventName) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
