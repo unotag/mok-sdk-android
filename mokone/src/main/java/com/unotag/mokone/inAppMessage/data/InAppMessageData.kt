@@ -76,5 +76,7 @@ data class PopupConfigs(
     @SerializedName("start_time")
     val startTime: String?,
     @SerializedName("end_time")
-    val endTime: String?
+    val endTime: String?,
+    @SerializedName("get_in_app_msg_data")
+    val getInAppMsgData: Boolean = false
 ): Serializable
