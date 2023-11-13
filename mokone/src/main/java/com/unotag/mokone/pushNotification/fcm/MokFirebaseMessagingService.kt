@@ -12,7 +12,10 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.google.gson.Gson
+import com.unotag.mokone.MokSDK
 import com.unotag.mokone.R
+import com.unotag.mokone.inAppMessage.data.PopupConfigs
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import com.unotag.mokone.utils.MokLogger
 import java.io.InputStream
@@ -22,40 +25,24 @@ import java.net.URL
 
 class MokFirebaseMessagingService : FirebaseMessagingService() {
 
-//    private var bigLargeIcon: Bitmap? = null
-//    private var bigPicture: Bitmap? = null
 
-
-    /**
-     * Called when message is received.
-     *
-     * @param remoteMessage Object representing the message received from Firebase Cloud Messaging.
-     */
-    // [START receive_message]
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // [START_EXCLUDE]
-        // There are two types of messages data messages and notification messages. Data messages are handled
-        // here in onMessageReceived whether the app is in the foreground or background. Data messages are the type
-        // traditionally used with GCM. Notification messages are only received here in onMessageReceived when the app
-        // is in the foreground. When the app is in the background an automatically generated notification is displayed.
-        // When the user taps on the notification they are returned to the app. Messages containing both notification
-        // and data payloads are treated as notification messages. The Firebase console always sends notification
-        // messages. For more see: https://firebase.google.com/docs/cloud-messaging/concept-options
-        // [END_EXCLUDE]
 
-        // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         MokLogger.log(MokLogger.LogLevel.DEBUG, "From: ${remoteMessage.from}")
 
-        // Check if message contains a data payload.
         if (remoteMessage.data.isNotEmpty()) {
             MokLogger.log(MokLogger.LogLevel.DEBUG, "Message data payload: ${remoteMessage.data}")
             val title = remoteMessage.data["title"]
             val body = remoteMessage.data["body"]
 
             if (title.isNullOrEmpty()) {
-                   MokLogger.log(MokLogger.LogLevel.DEBUG, "THIS IS A IN APP MESG")
 
-                remoteMessage.data["get_in_app_msg_data"]
+                val popupConfigs = Gson().fromJson(remoteMessage.data["popup_configs"], PopupConfigs::class.java)
+                val getInAppMsgData = popupConfigs.getInAppMsgData
+
+                if (getInAppMsgData) {
+                    handleInAppNotification()
+                }
 
             } else if (remoteMessage.data.containsKey("image")) {
                 val image = remoteMessage.data["image"]
@@ -66,29 +53,14 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             } else {
                 sendNotification(title, body)
             }
-
-            // Check if data needs to be processed by long running job
-            //if (isLongRunningJob()) {
-            // For long-running tasks (10 seconds or more) use WorkManager.
-            //   scheduleJob()
-//            else {
-//                // Handle message within 10 seconds
-//                handleNow()
-//            }
         }
+    }
 
-        // Check if message contains a notification payload.
+    // Check if message contains a notification payload.
 //        remoteMessage.notification?.let {
 //            MokLogger.log(MokLogger.LogLevel.DEBUG, "Message Notification Body: ${it.body}")
 //            it.body?.let { body -> sendNotification() }
 //        }
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
-    }
-    // [END receive_message]
-
-    private fun isLongRunningJob() = true
 
     // [START on_new_token]
     /**
@@ -106,32 +78,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
     }
     // [END on_new_token]
 
-    /**
-     * Schedule async work using WorkManager.
-     */
-    private fun scheduleJob() {
-        // [START dispatch_job]
-//        val work = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
-//        WorkManager.getInstance(this).beginWith(work).enqueue()
-//        // [END dispatch_job]
-    }
 
-    /**
-     * Handle time allotted to BroadcastReceivers.
-     */
-    private fun handleNow() {
-        MokLogger.log(MokLogger.LogLevel.DEBUG, "Short lived task is done.")
-        //   sendNotification()
-    }
-
-    /**
-     * Persist token to third-party servers.
-     *
-     * Modify this method to associate the user's FCM registration token with any server-side account
-     * maintained by your application.
-     *
-     * @param token The new token.
-     */
     private fun sendRegistrationToServer(token: String?) {
         // TODO: Implement this method to send token to your app server.
         MokLogger.log(MokLogger.LogLevel.DEBUG, "sendRegistrationTokenToServer($token)")
@@ -147,12 +94,20 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val launchIntent = getLaunchIntent()
         val pendingIntent = getPendingIntent(launchIntent, requestCode)
         val channelId = getString(R.string.default_notification_channel_id)
-        val notificationBuilder = buildNotification(title, messageBody, bigPicture, bigLargeIcon, channelId, pendingIntent)
+        val notificationBuilder = buildNotification(
+            title,
+            messageBody,
+            bigPicture,
+            bigLargeIcon,
+            channelId,
+            pendingIntent
+        )
         notify(notificationBuilder)
     }
 
     private fun getLaunchIntent(): Intent? {
-        val launchIntent = applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
+        val launchIntent =
+            applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)
         launchIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return launchIntent
     }
@@ -192,7 +147,8 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun notify(notificationBuilder: NotificationCompat.Builder) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = notificationBuilder.build().channelId
@@ -225,31 +181,9 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
-
-    private fun handleInAppNotification(data: Map<String, String>) {
-        try {
-            //val inAppMessageData = InAppMessageData.fromMap(data)
-
-//            val db = Room.databaseBuilder(applicationContext, MokDb::class.java, "mok-database").build()
-//            val scope = CoroutineScope(Dispatchers.IO)
-//
-//            scope.launch {
-//                try {
-//                    val inAppMessageDao = db.inAppMessageDao()
-//                    val inAppMessageEntity = inAppMessageData.toEntity()
-//                    inAppMessageDao.insert(inAppMessageEntity)
-//                } catch (e: Exception) {
-//                    MokLogger.log(MokLogger.LogLevel.ERROR, "Error inserting in-app message: ${e.message}")
-//                } finally {
-//                    db.close() // Close the database when done
-//                }
-//            }
-        } catch (e: Exception) {
-            MokLogger.log(
-                MokLogger.LogLevel.ERROR,
-                "Error handling in-app notification: ${e.message}"
-            )
-        }
+    private fun handleInAppNotification() {
+        val mokSDK = MokSDK.getInstance(applicationContext)
+        mokSDK.requestIAMFromServerAndShow()
     }
 
 }

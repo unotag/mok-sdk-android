@@ -16,8 +16,9 @@ import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
 import org.json.JSONObject
 
-class MokSDK private constructor(private val context: Context) {
+class MokSDK private constructor() {
 
+    private lateinit var mContext: Context
     private lateinit var pushNotificationPermissionHandler: PushNotificationPermissionHandler
 
     companion object {
@@ -27,8 +28,9 @@ class MokSDK private constructor(private val context: Context) {
         // Get the singleton instance of MokSDK
         fun getInstance(context: Context): MokSDK {
             if (instance == null) {
-                instance = MokSDK(context.applicationContext)
+                instance = MokSDK()
                 appContext = context.applicationContext
+                instance?.mContext = context.applicationContext
             }
             return instance as MokSDK
         }
@@ -40,10 +42,10 @@ class MokSDK private constructor(private val context: Context) {
     }
 
 
-    fun initMokSDK(isProductionEvn: Boolean) {
-        MokSDKConstants.IS_PRODUCTION_ENV = isProductionEvn
+    fun initMokSDK(isProdEnv: Boolean) {
+        MokSDKConstants.IS_PRODUCTION_ENV = isProdEnv
 
-        val manifestReader = ManifestReader(context)
+        val manifestReader = ManifestReader(mContext)
         val readKey = manifestReader.readString(ManifestReader.MOK_READ_KEY)
         val writeKey = manifestReader.readString(ManifestReader.MOK_WRITE_KEY)
         if (readKey.isNotEmpty() || writeKey.isNotEmpty()) {
@@ -53,12 +55,18 @@ class MokSDK private constructor(private val context: Context) {
             MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
         }
 
-        val inAppMessageHandler = InAppMessageHandler(context, "MOASDK_001")
-        inAppMessageHandler.showInAppMessages(5)
-
-       // requestIAMFromServerAndShow()
+        requestIAMFromServerAndShow()
     }
 
+    fun enableProductionEnvironment(value: Boolean) {
+        MokSDKConstants.IS_PRODUCTION_ENV = value
+    }
+
+    fun enableInAppMessages(value: Boolean){
+        if (value) {
+            requestIAMFromServerAndShow()
+        }
+    }
 
 //region FetchFCM Notification status, permission, settings
 
@@ -81,7 +89,7 @@ class MokSDK private constructor(private val context: Context) {
 
     private fun initializePushNotificationPermissionHandler(activity: Activity) {
         pushNotificationPermissionHandler = PushNotificationPermissionHandler(
-            context.applicationContext,
+            mContext.applicationContext,
             activity
         )
     }
@@ -109,17 +117,17 @@ class MokSDK private constructor(private val context: Context) {
         data: JSONObject?,
         callback: (success: JSONObject?, errorMessage: String?) -> Unit
     ) {
-        val userSessionManager = UserSessionManager(context)
+        val userSessionManager = UserSessionManager(mContext)
         userSessionManager.requestUpdateUser(userId, data, callback)
     }
 
     fun getUserId(): String{
-        val userSessionManager = UserSessionManager(context)
+        val userSessionManager = UserSessionManager(mContext)
         return userSessionManager.getPersistenceUserId()
     }
 
     fun logoutUser(){
-        val userSessionManager = UserSessionManager(context)
+        val userSessionManager = UserSessionManager(mContext)
         userSessionManager.requestLogoutUser()
     }
 
@@ -137,11 +145,10 @@ class MokSDK private constructor(private val context: Context) {
 
     //region In App messages
      fun requestIAMFromServerAndShow() {
-
-        val sharedPreferencesService = SharedPreferencesService(context)
+        val sharedPreferencesService = SharedPreferencesService(mContext)
         val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
         if (userId.isNotEmpty()) {
-            val inAppMessageHandler = InAppMessageHandler(context, userId)
+            val inAppMessageHandler = InAppMessageHandler(mContext, userId)
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
                 inAppMessageHandler.showInAppMessages(5)

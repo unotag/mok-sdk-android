@@ -21,7 +21,7 @@ artifacts {
 }
 
 group = 'com.unotags'
-version = '0.0.19'
+version = '0.0.22'
 
 afterEvaluate {
     publishing {

@@ -98,7 +98,7 @@ class MokApiCallTask() {
             reader.close()
             return JSONObject(response)
         } else {
-            throw Exception("API call failed with response code: $responseCode")
+            throw Exception("ERROR: API call failed with response code: $responseCode")
         }
     }
 }
