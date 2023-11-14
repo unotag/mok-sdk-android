@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.unotag.mokone.databinding.ActivityIamfullScreenWebViewBinding
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
@@ -31,13 +33,25 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-//        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-//        supportActionBar?.setDisplayShowHomeEnabled(true)
+
+        val onBackPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val resultIntent = Intent()
+                setResult(RESULT_OK, resultIntent)
+                finish()
+//                when {
+//                    binding.fullScreenWebview.canGoBack() -> binding.fullScreenWebview.goBack()
+//                }
+            }
+        }
+
+        onBackPressedDispatcher.addCallback(onBackPressedCallback)
+//
+       // disableOnBackPressedCallback(binding.fullScreenWebview, onBackPressedCallback)
 
         inAppMessageItem?.jsonData?.popupConfigs?.webUrl?.let { initWebView(it) } ?: run {
             MokLogger.log(MokLogger.LogLevel.ERROR, "URL is null, update url from mok.one template")
         }
-
 
 
         binding.fullScreenWebview.webChromeClient = object : WebChromeClient() {
@@ -62,10 +76,19 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         binding.fullScreenWebview.loadUrl(url)
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val resultIntent = Intent()
-        setResult(RESULT_OK, resultIntent)
-        finish()
-        return true
+
+    private fun disableOnBackPressedCallback(
+        webView: WebView,
+        onBackPressedCallback: OnBackPressedCallback
+    ) {
+        webView.webViewClient = object : WebViewClient() {
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                // Disable the on-back press callback if there are no more questions in the
+                // WebView to go back to, allowing us to exit the WebView and go back to
+                // the fragment.
+                webView.canGoBack().also { onBackPressedCallback.isEnabled = it }
+
+            }
+        }
     }
 }
