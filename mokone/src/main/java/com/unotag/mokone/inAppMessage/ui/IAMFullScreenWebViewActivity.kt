@@ -2,6 +2,7 @@ package com.unotag.mokone.inAppMessage.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -13,7 +14,6 @@ import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.utils.MokLogger
 
 class IAMFullScreenWebViewActivity : AppCompatActivity() {
-
 
     private lateinit var binding: ActivityIamfullScreenWebViewBinding
 
@@ -31,8 +31,8 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
+//        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+//        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         inAppMessageItem?.jsonData?.popupConfigs?.webUrl?.let { initWebView(it) } ?: run {
             MokLogger.log(MokLogger.LogLevel.ERROR, "URL is null, update url from mok.one template")
@@ -54,9 +54,10 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
 
     }
 
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun initWebView(url: String) {
+        binding.fullScreenWebview.setBackgroundColor(Color.WHITE);
+
         binding.fullScreenWebview.settings.javaScriptEnabled = true
         binding.fullScreenWebview.loadUrl(url)
     }

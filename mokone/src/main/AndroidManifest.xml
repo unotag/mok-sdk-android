@@ -9,7 +9,9 @@
     <application>
         <activity
             android:name=".inAppMessage.ui.IAMFullScreenWebViewActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/FullScreenWebViewTheme"/>
+
         <activity
             android:name=".inAppMessage.ui.InAppMessageBaseActivity"
             android:exported="false"

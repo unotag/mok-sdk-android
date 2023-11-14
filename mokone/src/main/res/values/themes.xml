@@ -10,6 +10,13 @@
 <!--        <item name="bottomSheetDialogTheme">@style/BottomSheetDialogStyle</item>-->
     </style>
 
+    <style name="FullScreenWebViewTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+
+
     <style name="RoundedDialogStyle" parent="Theme.AppCompat.Dialog">
         <item name="android:background">@drawable/dialog_rounded_corners</item>
         <item name="android:padding">16dp</item> <!-- Adjust the padding as needed -->
