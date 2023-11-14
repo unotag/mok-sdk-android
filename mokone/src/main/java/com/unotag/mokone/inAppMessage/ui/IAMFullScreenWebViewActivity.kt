@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import com.unotag.mokone.databinding.ActivityIamfullScreenWebViewBinding
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
@@ -27,11 +30,28 @@ class IAMFullScreenWebViewActivity : AppCompatActivity() {
         binding = ActivityIamfullScreenWebViewBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
+
         inAppMessageItem?.jsonData?.popupConfigs?.webUrl?.let { initWebView(it) } ?: run {
             MokLogger.log(MokLogger.LogLevel.ERROR, "URL is null, update url from mok.one template")
         }
+
+
+
+        binding.fullScreenWebview.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                super.onProgressChanged(view, newProgress)
+                binding.progressBar.visibility = View.VISIBLE
+                binding.progressBar.progress = newProgress
+
+                if (newProgress == 100) {
+                    binding.progressBar.visibility = View.GONE
+                }
+            }
+        }
+
     }
 
 
