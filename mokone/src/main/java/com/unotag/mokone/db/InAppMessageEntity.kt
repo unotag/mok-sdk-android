@@ -8,5 +8,5 @@ data class InAppMessageEntity(
     @PrimaryKey
     val inAppMessageId: String = "",
     val inAppMessageAsString: String?,
-    val isSeen: Boolean = false
+    var isSeen: Boolean = false
 )
