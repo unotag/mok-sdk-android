@@ -14,6 +14,8 @@ import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MokSDK private constructor() {
@@ -42,7 +44,7 @@ class MokSDK private constructor() {
     }
 
 
-    fun initMokSDK(isProdEnv: Boolean) {
+    fun initMokSDK(isProdEnv: Boolean, delayMillis: Long = 5000) {
         MokSDKConstants.IS_PRODUCTION_ENV = isProdEnv
 
         val manifestReader = ManifestReader(mContext)
@@ -55,7 +57,10 @@ class MokSDK private constructor() {
             MokLogger.log(MokLogger.LogLevel.ERROR, "READ/WRITE key is missing")
         }
 
-        requestIAMFromServerAndShow()
+        GlobalScope.launch {
+            kotlinx.coroutines.delay(delayMillis)
+            requestIAMFromServerAndShow()
+        }
     }
 
     fun enableProductionEnvironment(value: Boolean) {
@@ -151,7 +156,7 @@ class MokSDK private constructor() {
             val inAppMessageHandler = InAppMessageHandler(mContext, userId)
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
-                inAppMessageHandler.showInAppMessages(5)
+                inAppMessageHandler.showInAppMessages(1)
             }
         } else {
             MokLogger.log(

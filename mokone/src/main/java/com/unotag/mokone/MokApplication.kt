@@ -16,7 +16,7 @@ open class MokApplication : Application(), Application.ActivityLifecycleCallback
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivityCreated: ${activity.javaClass.simpleName}"
+            "onActivity Created: ${activity.javaClass.simpleName}"
         )
 
         val mokSDK = MokSDK.getInstance(applicationContext)
@@ -30,39 +30,39 @@ open class MokApplication : Application(), Application.ActivityLifecycleCallback
     override fun onActivityStarted(activity: Activity) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivityStarted: ${activity.javaClass.simpleName}"
+            "onActivity Started: ${activity.javaClass.simpleName}"
         )
     }
 
     override fun onActivityResumed(activity: Activity) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivityResumed: ${activity.javaClass.simpleName}"
+            "onActivity Resumed: ${activity.javaClass.simpleName}"
         )
     }
 
     override fun onActivityPaused(activity: Activity) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "onActivityPaused: ${activity.javaClass.simpleName}")
+        MokLogger.log(MokLogger.LogLevel.INFO, "onActivity Paused: ${activity.javaClass.simpleName}")
     }
 
     override fun onActivityStopped(activity: Activity) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivityStopped: ${activity.javaClass.simpleName}"
+            "onActivity Stopped: ${activity.javaClass.simpleName}"
         )
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivitySaveInstanceState: ${activity.javaClass.simpleName}"
+            "onActivity SaveInstanceState: ${activity.javaClass.simpleName}"
         )
     }
 
     override fun onActivityDestroyed(activity: Activity) {
         MokLogger.log(
             MokLogger.LogLevel.INFO,
-            "onActivityDestroyed: ${activity.javaClass.simpleName}"
+            "onActivity Destroyed: ${activity.javaClass.simpleName}"
         )
     }
 
