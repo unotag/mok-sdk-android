@@ -1,9 +1,7 @@
 package com.unotag.mokone.inAppMessage.ui
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
@@ -18,20 +16,11 @@ enum class MessageType {
     UNKNOWN
 }
 
-class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener {
+class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener, FullScreenWebViewClosedListener {
 
     private lateinit var mInAppMessageId: String
     private lateinit var mUserId: String
 
-    private val fullScreenWebViewResultLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val data = result.data
-                val markAsSeen = data?.getBooleanExtra("mark_as_seen", false)
-                markInAppMessageAsRead()
-                finish()
-            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,12 +54,16 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         val messageType = determineMessageType(isHtmlType, isNormalType, isWebSiteType)
 
         when (messageType) {
-            MessageType.HTML, MessageType.NORMAL, MessageType.UNKNOWN -> {
+            MessageType.HTML, MessageType.NORMAL -> {
                 popupStyleDecisionEngine(inAppMessageItem)
             }
 
             MessageType.WEB -> {
-                launchIAMFullScreenWebViewActivity(inAppMessageItem)
+                launchIAMFullScreenWebViewFragment(inAppMessageItem)
+            }
+
+            MessageType.UNKNOWN -> {
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM type is UNKNOWN")
             }
         }
     }
@@ -95,6 +88,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> launchIAMWebViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItem)
+            //TODO: OPEN RAW HTML IN PULL SCREEN
             "full_page" -> {}
             "pip_video" -> {}
             else -> launchIAMWebViewDialog(inAppMessageItem)
@@ -128,11 +122,19 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
 
-    private fun launchIAMFullScreenWebViewActivity(inAppMessageItem: InAppMessageItem) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewActivity launched")
-        val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
-        intent.putExtra("in_app_message_data", inAppMessageItem)
-        fullScreenWebViewResultLauncher.launch(intent)
+    private fun launchIAMFullScreenWebViewFragment(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewFragment launched")
+
+        val fragment = IAMFullScreenWebViewFragment()
+        fragment.setFullScreenWebViewClosedListener(this)
+        val args = Bundle().apply {
+            putSerializable("in_app_message_data", inAppMessageItem)
+        }
+        fragment.arguments = args
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
 
@@ -151,8 +153,12 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         finish()
     }
 
-
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    override fun onFullScreenWebViewClosed() {
+        markInAppMessageAsRead()
+        finish()
     }
 }

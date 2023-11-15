@@ -2,8 +2,6 @@ package com.unotag.mokone
 
 import android.app.Activity
 import android.content.Context
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.ktx.messaging
 import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.helper.ManifestReader
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
@@ -11,6 +9,7 @@ import com.unotag.mokone.inAppMessage.data.InAppMessageData
 import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
@@ -44,7 +43,7 @@ class MokSDK private constructor() {
     }
 
 
-    fun initMokSDK(isProdEnv: Boolean, delayMillis: Long = 5000) {
+    fun initMokSDK(isProdEnv: Boolean, delayMillis: Long? = 5000, maxDisplayedIAMs: Int? = 5) {
         MokSDKConstants.IS_PRODUCTION_ENV = isProdEnv
 
         val manifestReader = ManifestReader(mContext)
@@ -58,8 +57,8 @@ class MokSDK private constructor() {
         }
 
         GlobalScope.launch {
-            kotlinx.coroutines.delay(delayMillis)
-            requestIAMFromServerAndShow()
+            kotlinx.coroutines.delay(delayMillis ?: 1000)
+            requestIAMFromServerAndShow(maxDisplayedIAMs ?: 5)
         }
     }
 
@@ -75,21 +74,9 @@ class MokSDK private constructor() {
 
 //region FetchFCM Notification status, permission, settings
 
-    fun getFCMToken(callback: (String?, String?) -> Unit) {
-        Firebase.messaging.token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                MokLogger.log(MokLogger.LogLevel.DEBUG, "FCM token: $token")
-                callback(token, null)
-            } else {
-                MokLogger.log(
-                    MokLogger.LogLevel.ERROR,
-                    "Fetching FCM registration token failed",
-                    task.exception
-                )
-                callback(null, task.exception?.localizedMessage)
-            }
-        }
+    fun requestFCMToken(callback: (String?, String?) -> Unit) {
+        val mokFirebaseMessagingService = MokFirebaseMessagingService()
+        mokFirebaseMessagingService.getFCMToken(callback)
     }
 
     private fun initializePushNotificationPermissionHandler(activity: Activity) {
@@ -149,14 +136,14 @@ class MokSDK private constructor() {
 //endregion
 
     //region In App messages
-     fun requestIAMFromServerAndShow() {
+     fun requestIAMFromServerAndShow(maxDisplayedIAMs : Int = 5) {
         val sharedPreferencesService = SharedPreferencesService(mContext)
         val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
         if (userId.isNotEmpty()) {
             val inAppMessageHandler = InAppMessageHandler(mContext, userId)
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
-                inAppMessageHandler.showInAppMessages(1)
+                inAppMessageHandler.showInAppMessages(maxDisplayedIAMs)
             }
         } else {
             MokLogger.log(

@@ -6,8 +6,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,10 +27,10 @@ class MainActivity : AppCompatActivity() {
         tabLayout.setupWithViewPager(viewPager)
 
 
-        GlobalScope.launch {
-            kotlinx.coroutines.delay(8000)
-            launchEmptyActivity()
-        }
+//        GlobalScope.launch {
+//            kotlinx.coroutines.delay(8000)
+//            launchEmptyActivity()
+//        }
     }
 
     fun launchEmptyActivity() {

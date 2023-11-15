@@ -155,7 +155,7 @@ class DashboardFragment : Fragment() {
 
     private fun getFcmToken() {
         val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-        mokSDK.getFCMToken { token, error ->
+        mokSDK.requestFCMToken { token, error ->
             if (token != null) {
                 binding.fcmTokenValue.text = token
             } else {

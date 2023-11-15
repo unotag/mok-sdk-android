@@ -103,6 +103,5 @@ internal class PushNotificationPermissionHandler(
         mContext.startActivity(intent)
     }
 
-
 }
 
