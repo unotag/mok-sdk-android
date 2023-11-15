@@ -9,8 +9,8 @@ class ExampleApplication : MokApplication() {
     override fun onCreate() {
         //registerActivityLifecycleCallbacks(this)
         super.onCreate()
-        val mokSDK = MokSDK.getInstance(applicationContext)
-        mokSDK.initMokSDK(isProdEnv = false)
+        MokSDK.getInstance(applicationContext)
+        MokSDK.initMokSDK(isProdEnv = false)
         MokLogger.setLogLevel(MokLogger.LogLevel.DEBUG)
     }
 }

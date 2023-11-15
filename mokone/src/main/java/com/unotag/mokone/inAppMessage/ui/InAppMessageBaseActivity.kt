@@ -11,12 +11,13 @@ import com.unotag.mokone.utils.MokLogger
 
 enum class MessageType {
     HTML,
-    NORMAL,
+    TEXT,
     WEB,
     UNKNOWN
 }
 
-class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener, FullScreenWebViewClosedListener {
+class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener,
+    FullScreenWebViewClosedListener {
 
     private lateinit var mInAppMessageId: String
     private lateinit var mUserId: String
@@ -38,24 +39,26 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         this.mUserId = inAppMessageItem?.clientId ?: "NA"
 
         if (inAppMessageItem != null) {
-            popupTypeDecisionEngine(inAppMessageItem)
+            iAMContentTypeDecisionEngine(inAppMessageItem)
         }
     }
 
 
-    private fun popupTypeDecisionEngine(
-        inAppMessageItem: InAppMessageItem
-    ) {
-        val isHtmlType: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
-        val isNormalType: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
-        val isWebSiteType: Boolean =
+    private fun iAMContentTypeDecisionEngine(inAppMessageItem: InAppMessageItem) {
+        val hasRawHtmlContent: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
+        val hasTextContent: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
+        val hasWebSiteContent: Boolean =
             !inAppMessageItem.jsonData?.popupConfigs?.webUrl.isNullOrEmpty()
 
-        val messageType = determineMessageType(isHtmlType, isNormalType, isWebSiteType)
+        val messageType = determineMessageType(hasRawHtmlContent, hasTextContent, hasWebSiteContent)
 
         when (messageType) {
-            MessageType.HTML, MessageType.NORMAL -> {
-                popupStyleDecisionEngine(inAppMessageItem)
+            MessageType.HTML -> {
+                iAMWebViewTypeDecisionEngine(inAppMessageItem)
+            }
+
+            MessageType.TEXT -> {
+                iAMTextViewTypeDecisionEngine(inAppMessageItem)
             }
 
             MessageType.WEB -> {
@@ -68,30 +71,40 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         }
     }
 
-
     private fun determineMessageType(
-        isHtmlType: Boolean,
-        isNormalType: Boolean,
-        isWebSiteType: Boolean
+        hasRawHtml: Boolean,
+        hasText: Boolean,
+        hasWebSite: Boolean
     ): MessageType {
         return when {
-            isHtmlType -> MessageType.HTML
-            !isHtmlType && isNormalType && isWebSiteType -> MessageType.NORMAL
-            !isHtmlType && !isNormalType && isWebSiteType -> MessageType.WEB
+            hasRawHtml -> MessageType.HTML
+            hasText && !hasWebSite -> MessageType.TEXT
+            !hasText && hasWebSite -> MessageType.WEB
             else -> MessageType.UNKNOWN
         }
     }
 
-    private fun popupStyleDecisionEngine(
-        inAppMessageItem: InAppMessageItem
+    private fun iAMWebViewTypeDecisionEngine(
+        inAppMessageItem: InAppMessageItem,
     ) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> launchIAMWebViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItem)
-            //TODO: OPEN RAW HTML IN PULL SCREEN
             "full_page" -> {}
             "pip_video" -> {}
             else -> launchIAMWebViewDialog(inAppMessageItem)
+        }
+    }
+
+    private fun iAMTextViewTypeDecisionEngine(
+        inAppMessageItem: InAppMessageItem,
+    ) {
+        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+            "normal" -> {}
+            "bottom_sheet" -> launchIAMBottomSheet(inAppMessageItem)
+            "full_page" -> {}
+            "pip_video" -> {}
+            else -> launchIAMBottomSheet(inAppMessageItem)
         }
     }
 
@@ -100,8 +113,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewDialog launched")
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
-            markInAppMessageAsRead()
-            finish()
+            markIAMAsReadAndCloseActivity()
         }
         dialog.show()
     }
@@ -118,6 +130,20 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         iAMWebViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMWebViewBottomSheetFragment.tag
+        )
+    }
+
+    private fun launchIAMBottomSheet(
+        inAppMessageItem: InAppMessageItem
+    ) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMBottomSheet launched")
+        val iAMBottomSheetFragment =
+            IAMBottomSheetFragment.newInstance(inAppMessageItem)
+        iAMBottomSheetFragment.setOnDismissListener(this)
+        iAMBottomSheetFragment.isCancelable = true
+        iAMBottomSheetFragment.show(
+            supportFragmentManager,
+            iAMBottomSheetFragment.tag
         )
     }
 
@@ -147,10 +173,13 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         }
     }
 
-
-    override fun onDismiss() {
+    private fun markIAMAsReadAndCloseActivity() {
         markInAppMessageAsRead()
         finish()
+    }
+
+    override fun onDismiss() {
+        markIAMAsReadAndCloseActivity()
     }
 
     override fun onDestroy() {
@@ -158,7 +187,8 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
     override fun onFullScreenWebViewClosed() {
-        markInAppMessageAsRead()
-        finish()
+        markIAMAsReadAndCloseActivity()
     }
+
+
 }

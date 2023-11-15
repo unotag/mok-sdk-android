@@ -30,7 +30,6 @@ internal class PushNotificationPermissionHandler(
         }
     }
 
-
     fun requestPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Permission is granted at install time on older devices

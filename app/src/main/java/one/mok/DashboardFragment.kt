@@ -25,7 +25,6 @@ class DashboardFragment : Fragment() {
 
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var mActivity: Activity
-    private lateinit var mMokSDK: MokSDK
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,18 +41,17 @@ class DashboardFragment : Fragment() {
         if (context is Activity) {
             mActivity = context
         }
-        mMokSDK = MokSDK.getInstance(mActivity.applicationContext)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.notificationPermissionBtn.setOnClickListener {
-            mMokSDK.requestNotificationPermission(mActivity)
+            MokSDK.requestNotificationPermission(mActivity)
         }
 
         binding.openNotificationSettingsBtn.setOnClickListener {
-            mMokSDK.openNotificationSettings(mActivity)
+            MokSDK.openNotificationSettings(mActivity)
         }
 
         binding.fcmTokenValue.setOnClickListener {
@@ -144,7 +142,7 @@ class DashboardFragment : Fragment() {
 
 
     private fun setNotificationPermissionStatus() {
-        val isGranted = mMokSDK.isNotificationPermissionGranted(mActivity)
+        val isGranted = MokSDK.isNotificationPermissionGranted(mActivity)
         binding.notificationSettingsStatus.text =
             if (isGranted) "Granted" else "Denied"
 
@@ -154,8 +152,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun getFcmToken() {
-        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-        mokSDK.requestFCMToken { token, error ->
+        MokSDK.requestFCMToken { token, error ->
             if (token != null) {
                 binding.fcmTokenValue.text = token
             } else {
@@ -166,11 +163,10 @@ class DashboardFragment : Fragment() {
 
     private fun logEvent(userId: String, eventName: String) {
         val params = binding.eventParamsEt.text.toString()
-        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
 
         if (params.isNotEmpty()) {
             val jsonBody = JSONObject(params)
-            mokSDK.logEvent(userId, eventName, jsonBody) { success, errorMessage ->
+            MokSDK.logEvent(userId, eventName, jsonBody) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
@@ -184,7 +180,7 @@ class DashboardFragment : Fragment() {
             }
         } else {
             // Handle the case when params is empty (null or "")
-            mokSDK.logEvent(userId,eventName) { success, errorMessage ->
+            MokSDK.logEvent(userId,eventName) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {
@@ -201,10 +197,9 @@ class DashboardFragment : Fragment() {
 
 
     private fun updateUser(userId: String) {
-        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
         val jsonBody = JSONObject()
         jsonBody.put("name", userId + "_ANDROID_SKD")
-        mokSDK.updateUser(userId, jsonBody) { success, errorMessage ->
+        MokSDK.updateUser(userId, jsonBody) { success, errorMessage ->
             if (success != null) {
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
             } else {
@@ -216,15 +211,13 @@ class DashboardFragment : Fragment() {
     }
 
     private fun fetchInAppMessageData() {
-        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
-        mokSDK.requestIAMFromServerAndShow()
+        MokSDK.requestIAMFromServerAndShow()
     }
 
     private fun updateFcmToken(userId: String, fcmToken: String?) {
-        val mokSDK = MokSDK.getInstance(mActivity.applicationContext)
         val jsonBody = JSONObject()
         jsonBody.put("fcm_registration_token", fcmToken ?: "N/A")
-        mokSDK.updateUser(userId, jsonBody) { success, errorMessage ->
+        MokSDK.updateUser(userId, jsonBody) { success, errorMessage ->
             if (success != null) {
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
             } else {
