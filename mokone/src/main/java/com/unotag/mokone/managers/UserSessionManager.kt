@@ -54,20 +54,16 @@ class UserSessionManager(
 
     private fun updateUserFCMToken() {
         messagingService.getFCMToken { token, _ ->
-            handleFCMTokenUpdate(token)
-        }
-    }
-
-    private fun handleFCMTokenUpdate(token: String?) {
-        if (token != null) {
-            savePersistenceFCMToken(token)
-            compareAndUpdateUserFcmToken(token)
+            if (token != null) {
+                compareAndUpdateUserFcmToken(token)
+            }
         }
     }
 
     private fun compareAndUpdateUserFcmToken(token: String) {
         val persistenceFCMToken = getPersistenceFCMToken()
         if (persistenceFCMToken != token) {
+            savePersistenceFCMToken(token)
             val userId = getPersistenceUserId()
             val jsonBody = JSONObject().apply {
                 put("fcm_registration_token", token)
