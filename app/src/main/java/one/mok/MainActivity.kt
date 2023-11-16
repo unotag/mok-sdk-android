@@ -1,6 +1,7 @@
 package one.mok
 
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager.widget.ViewPager
@@ -24,5 +25,16 @@ class MainActivity : AppCompatActivity() {
 
         viewPager.adapter = adapter
         tabLayout.setupWithViewPager(viewPager)
+
+
+//        GlobalScope.launch {
+//            kotlinx.coroutines.delay(8000)
+//            launchEmptyActivity()
+//        }
+    }
+
+    fun launchEmptyActivity() {
+        val intent = Intent(this, EmptyActivity::class.java)
+        startActivity(intent)
     }
 }

@@ -16,7 +16,6 @@ class SettingsFragment : Fragment() {
     private lateinit var binding: FragmentSettingsBinding
 
     private lateinit var mActivity: Activity
-    private lateinit var mMokSDK: MokSDK
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,13 +31,12 @@ class SettingsFragment : Fragment() {
         if (context is Activity) {
             mActivity = context
         }
-        mMokSDK = MokSDK.getInstance(mActivity.applicationContext)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        val bundle: Bundle? = mMokSDK.getApiKeyFromManifest(mActivity)
+//        val bundle: Bundle? = MokSDK.getApiKeyFromManifest(mActivity)
 //        if (bundle != null) {
 //            val readKey = bundle.getString("MOK_READ_KEY")
 //            val writeKey = bundle.getString("MOK_WRITE_KEY")
@@ -53,17 +51,17 @@ class SettingsFragment : Fragment() {
 //        }
 
 
-        binding.hostUrlTv.text = "Host URL: " + mMokSDK.getHostUrl()
+        binding.hostUrlTv.text = "Host URL: " + MokSDK.getHostUrl()
 
 
         binding.changeEnvTb.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                mMokSDK.updateEnv(isChecked)
+                MokSDK.updateEnv(isChecked)
 
             } else {
-                mMokSDK.updateEnv(isChecked)
+                MokSDK.updateEnv(isChecked)
             }
-            binding.hostUrlTv.text = "Host URL: " + mMokSDK.getHostUrl()
+            binding.hostUrlTv.text = "Host URL: " + MokSDK.getHostUrl()
         }
 
         binding.updateKeysBtn.setOnClickListener {
@@ -72,7 +70,7 @@ class SettingsFragment : Fragment() {
             if (readKey.isBlank() || writeKey.isBlank()) {
                 showToast("read or write keys cannot be empty")
             } else {
-                mMokSDK.updateApiKeys(readKey, writeKey)
+                MokSDK.updateApiKeys(readKey, writeKey)
                 showToast("keys updated successfully")
 
             }

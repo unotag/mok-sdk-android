@@ -1,9 +1,7 @@
 package com.unotag.mokone.inAppMessage.ui
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
@@ -13,25 +11,17 @@ import com.unotag.mokone.utils.MokLogger
 
 enum class MessageType {
     HTML,
-    NORMAL,
+    TEXT,
+    IMAGE,
     WEB,
     UNKNOWN
 }
 
-class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener {
+class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener,
+    FullScreenWebViewClosedListener {
 
     private lateinit var mInAppMessageId: String
     private lateinit var mUserId: String
-
-    private val fullScreenWebViewResultLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val data = result.data
-                val markAsSeen = data?.getBooleanExtra("mark_as_seen", false)
-                markInAppMessageAsRead()
-                finish()
-            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,53 +34,70 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
                 intent.getSerializableExtra("in_app_message_data") as InAppMessageItem
             }
 
-
         this.mInAppMessageId = inAppMessageItem?.inAppId ?: "NA"
         this.mUserId = inAppMessageItem?.clientId ?: "NA"
 
         if (inAppMessageItem != null) {
-            popupTypeDecisionEngine(inAppMessageItem)
+            iAMContentTypeDecisionEngine(inAppMessageItem)
         }
     }
 
 
-    private fun popupTypeDecisionEngine(
-        inAppMessageItem: InAppMessageItem
-    ) {
-        val isHtmlType: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
-        val isNormalType: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
-        val isWebSiteType: Boolean =
+    private fun iAMContentTypeDecisionEngine(inAppMessageItem: InAppMessageItem) {
+        val hasRawHtmlContent: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
+        val hasTextContent: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
+        val hasImageContent: Boolean = !inAppMessageItem.jsonData?.image.isNullOrEmpty()
+        val hasWebSiteContent: Boolean =
             !inAppMessageItem.jsonData?.popupConfigs?.webUrl.isNullOrEmpty()
 
-        val messageType = determineMessageType(isHtmlType, isNormalType, isWebSiteType)
+        val messageType = determineMessageType(
+            hasRawHtmlContent,
+            hasTextContent,
+            hasImageContent,
+            hasWebSiteContent
+        )
 
         when (messageType) {
-            MessageType.HTML, MessageType.NORMAL, MessageType.UNKNOWN -> {
-                popupStyleDecisionEngine(inAppMessageItem)
+            MessageType.HTML -> {
+                iAMWebViewTypeDecisionEngine(inAppMessageItem)
+            }
+
+            MessageType.TEXT -> {
+                iAMTextViewTypeDecisionEngine(inAppMessageItem)
+            }
+
+            MessageType.IMAGE -> {
+                iAMImageViewTypeDecisionEngine(inAppMessageItem)
             }
 
             MessageType.WEB -> {
-                launchIAMFullScreenWebViewActivity(inAppMessageItem)
+                launchIAMFullScreenWebViewFragment(inAppMessageItem)
+            }
+
+            MessageType.UNKNOWN -> {
+                finish()
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM type is UNKNOWN")
             }
         }
     }
 
-
-    private fun determineMessageType(
-        isHtmlType: Boolean,
-        isNormalType: Boolean,
-        isWebSiteType: Boolean
+    fun determineMessageType(
+        hasRawHtml: Boolean,
+        hasText: Boolean,
+        hasImage: Boolean,
+        hasWebSite: Boolean
     ): MessageType {
         return when {
-            isHtmlType -> MessageType.HTML
-            !isHtmlType && isNormalType && isWebSiteType -> MessageType.NORMAL
-            !isHtmlType && !isNormalType && isWebSiteType -> MessageType.WEB
+            hasRawHtml -> MessageType.HTML
+            hasText -> MessageType.TEXT
+            hasImage -> MessageType.IMAGE
+            hasWebSite -> MessageType.WEB
             else -> MessageType.UNKNOWN
         }
     }
 
-    private fun popupStyleDecisionEngine(
-        inAppMessageItem: InAppMessageItem
+    private fun iAMWebViewTypeDecisionEngine(
+        inAppMessageItem: InAppMessageItem,
     ) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
             "normal" -> launchIAMWebViewDialog(inAppMessageItem)
@@ -101,13 +108,54 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         }
     }
 
+    private fun iAMTextViewTypeDecisionEngine(
+        inAppMessageItem: InAppMessageItem,
+    ) {
+        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+            "normal" -> launchIAMTextViewDialog(inAppMessageItem)
+            "bottom_sheet" -> launchIAMTextViewBottomSheet(inAppMessageItem)
+            "full_page" -> {}
+            "pip_video" -> {}
+            else -> launchIAMTextViewBottomSheet(inAppMessageItem)
+        }
+    }
+
+    private fun iAMImageViewTypeDecisionEngine(
+        inAppMessageItem: InAppMessageItem,
+    ) {
+        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+            "normal" -> launchIAMImageViewDialog(inAppMessageItem)
+            "bottom_sheet" -> launchIAMImageViewBottomSheet(inAppMessageItem)
+            "full_page" -> {}
+            "pip_video" -> {}
+            else -> launchIAMTextViewBottomSheet(inAppMessageItem)
+        }
+    }
+
 
     private fun launchIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewDialog launched")
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM WebView Dialog launched")
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
-            markInAppMessageAsRead()
-            finish()
+            markIAMAsReadAndCloseActivity()
+        }
+        dialog.show()
+    }
+
+    private fun launchIAMTextViewDialog(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM TextView Dialog launched")
+        val dialog = IAMTextViewDialog(this, inAppMessageItem)
+        dialog.setOnDismissListener {
+            markIAMAsReadAndCloseActivity()
+        }
+        dialog.show()
+    }
+
+    private fun launchIAMImageViewDialog(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM ImageView Dialog launched")
+        val dialog = IAMImageViewDialog(this, inAppMessageItem)
+        dialog.setOnDismissListener {
+            markIAMAsReadAndCloseActivity()
         }
         dialog.show()
     }
@@ -116,7 +164,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     private fun launchIAMWebViewBottomSheet(
         inAppMessageItem: InAppMessageItem
     ) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewBottomSheet launched")
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM WebView BottomSheet launched")
         val iAMWebViewBottomSheetFragment =
             IAMWebViewBottomSheetFragment.newInstance(inAppMessageItem)
         iAMWebViewBottomSheetFragment.setOnDismissListener(this)
@@ -127,14 +175,48 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         )
     }
 
-
-    private fun launchIAMFullScreenWebViewActivity(inAppMessageItem: InAppMessageItem) {
-        MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewActivity launched")
-        val intent = Intent(this, IAMFullScreenWebViewActivity::class.java)
-        intent.putExtra("in_app_message_data", inAppMessageItem)
-        fullScreenWebViewResultLauncher.launch(intent)
+    private fun launchIAMTextViewBottomSheet(
+        inAppMessageItem: InAppMessageItem
+    ) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM TextView BottomSheet launched")
+        val iAMTextViewBottomSheetFragment =
+            IAMTextViewBottomSheetFragment.newInstance(inAppMessageItem)
+        iAMTextViewBottomSheetFragment.setOnDismissListener(this)
+        iAMTextViewBottomSheetFragment.isCancelable = true
+        iAMTextViewBottomSheetFragment.show(
+            supportFragmentManager,
+            iAMTextViewBottomSheetFragment.tag
+        )
     }
 
+    private fun launchIAMImageViewBottomSheet(
+        inAppMessageItem: InAppMessageItem
+    ) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAM ImageView BottomSheet launched")
+        val iAMImageViewBottomSheetFragment =
+            IAMImageViewBottomSheetFragment.newInstance(inAppMessageItem)
+        iAMImageViewBottomSheetFragment.setOnDismissListener(this)
+        iAMImageViewBottomSheetFragment.isCancelable = true
+        iAMImageViewBottomSheetFragment.show(
+            supportFragmentManager,
+            iAMImageViewBottomSheetFragment.tag
+        )
+    }
+
+    private fun launchIAMFullScreenWebViewFragment(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewFragment launched")
+
+        val fragment = IAMFullScreenWebViewFragment()
+        fragment.setFullScreenWebViewClosedListener(this)
+        val args = Bundle().apply {
+            putSerializable("in_app_message_data", inAppMessageItem)
+        }
+        fragment.arguments = args
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
 
     private fun markInAppMessageAsRead() {
         if (mUserId.isNotEmpty()) {
@@ -145,14 +227,16 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         }
     }
 
-
-    override fun onDismiss() {
-        markInAppMessageAsRead()
+    private fun markIAMAsReadAndCloseActivity() {
         finish()
+        markInAppMessageAsRead()
     }
 
+    override fun onDismiss() {
+        markIAMAsReadAndCloseActivity()
+    }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onFullScreenWebViewClosed() {
+        markIAMAsReadAndCloseActivity()
     }
 }

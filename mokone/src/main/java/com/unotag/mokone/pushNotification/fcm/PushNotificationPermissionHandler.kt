@@ -30,7 +30,6 @@ internal class PushNotificationPermissionHandler(
         }
     }
 
-
     fun requestPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Permission is granted at install time on older devices
@@ -102,7 +101,6 @@ internal class PushNotificationPermissionHandler(
         intent.putExtra("android.provider.extra.APP_PACKAGE", mContext.packageName)
         mContext.startActivity(intent)
     }
-
 
 }
 

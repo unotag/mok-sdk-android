@@ -10,6 +10,7 @@ class SharedPreferencesService(context: Context) {
 
     companion object {
         const val USER_ID_KEY: String = "user_id"
+        const val FCM_TOKEN: String = "fcm_token"
     }
 
     fun saveString(key: String, value: String) {

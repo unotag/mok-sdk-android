@@ -193,6 +193,13 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         context.startActivity(intent)
     }
 
+    private fun reorderIAMBaseActivity(inAppMessageItem: InAppMessageItem) {
+        val intent = Intent(context, InAppMessageBaseActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        intent.putExtra("in_app_message_data", inAppMessageItem)
+        context.startActivity(intent)
+    }
+
     fun showInAppMessages(limit: Int? = 1) {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         coroutineScope.launch {

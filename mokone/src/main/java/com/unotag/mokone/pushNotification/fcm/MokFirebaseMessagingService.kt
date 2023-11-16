@@ -10,8 +10,10 @@ import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.google.firebase.messaging.ktx.messaging
 import com.google.gson.Gson
 import com.unotag.mokone.MokSDK
 import com.unotag.mokone.R
@@ -38,7 +40,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             if (title.isNullOrEmpty()) {
 
                 val popupConfigs = Gson().fromJson(remoteMessage.data["popup_configs"], PopupConfigs::class.java)
-                val getInAppMsgData = popupConfigs.getInAppMsgData
+                val getInAppMsgData = popupConfigs?.getInAppMsgData ?: false
 
                 if (getInAppMsgData) {
                     handleInAppNotification()
@@ -178,6 +180,23 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
                 "Error in getting notification image: " + e.localizedMessage
             )
             null
+        }
+    }
+
+    fun getFCMToken(callback: (String?, String?) -> Unit) {
+        Firebase.messaging.token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                MokLogger.log(MokLogger.LogLevel.DEBUG, "FCM token: $token")
+                callback(token, null)
+            } else {
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "Fetching FCM registration token failed",
+                    task.exception
+                )
+                callback(null, task.exception?.localizedMessage)
+            }
         }
     }
 
