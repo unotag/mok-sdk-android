@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.ImageView
 import com.unotag.mokone.R
+import com.unotag.mokone.databinding.IAMWebviewDialogLayoutBinding
 import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.utils.MokLogger
 
@@ -22,9 +24,13 @@ class IAMWebViewDialog(
         onDismissListener = listener
     }
 
+    private val binding: IAMWebviewDialogLayoutBinding by lazy {
+        IAMWebviewDialogLayoutBinding.inflate(LayoutInflater.from(context))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.i_a_m_webview_dialog_layout)
+        setContentView(binding.root)
 
         window?.setBackgroundDrawableResource(R.drawable.dialog_rounded_corners)
         window?.decorView?.setPadding(0, 0, 0, 0)
@@ -44,7 +50,6 @@ class IAMWebViewDialog(
             )
         }
 
-
         // Adjust the dialog's size based on the content height
         val layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -56,10 +61,10 @@ class IAMWebViewDialog(
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun initWebView(html: String) {
-        val webView = findViewById<WebView>(R.id.webView)
-        webView.settings.javaScriptEnabled = true
+
+        binding.webView.settings.javaScriptEnabled = true
         WebView.setWebContentsDebuggingEnabled(true)
-        webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
+        binding.webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
     }
 
     override fun dismiss() {

@@ -13,7 +13,7 @@ import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.inAppMessage.data.JsonData
 import com.unotag.mokone.utils.MokLogger
 
-class IAMBottomSheetFragment : BottomSheetDialogFragment() {
+class IAMTextViewBottomSheetFragment : BottomSheetDialogFragment() {
 
     companion object {
         private const val ARG_IN_APP_MESSAGE_DATA = "in_app_message_data"
@@ -61,7 +61,7 @@ class IAMBottomSheetFragment : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         mInAppMessageItem?.jsonData?.let { initViews(it) } ?: run{
-            MokLogger.log(MokLogger.LogLevel.ERROR, "HTML content is empty")
+            MokLogger.log(MokLogger.LogLevel.ERROR, "Json data is empty")
         }
 
         binding.confirmBtn.setOnClickListener {

@@ -22,7 +22,6 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     private lateinit var mInAppMessageId: String
     private lateinit var mUserId: String
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_in_app_message_base)
@@ -66,6 +65,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
             }
 
             MessageType.UNKNOWN -> {
+                finish()
                 MokLogger.log(MokLogger.LogLevel.DEBUG, "IAM type is UNKNOWN")
             }
         }
@@ -100,7 +100,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         inAppMessageItem: InAppMessageItem,
     ) {
         when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
-            "normal" -> {}
+            "normal" -> launchIAMTextViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMBottomSheet(inAppMessageItem)
             "full_page" -> {}
             "pip_video" -> {}
@@ -112,6 +112,15 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     private fun launchIAMWebViewDialog(inAppMessageItem: InAppMessageItem) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewDialog launched")
         val dialog = IAMWebViewDialog(this, inAppMessageItem)
+        dialog.setOnDismissListener {
+            markIAMAsReadAndCloseActivity()
+        }
+        dialog.show()
+    }
+
+    private fun launchIAMTextViewDialog(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "IAMWebViewDialog launched")
+        val dialog = IAMTextViewDialog(this, inAppMessageItem)
         dialog.setOnDismissListener {
             markIAMAsReadAndCloseActivity()
         }
@@ -137,16 +146,15 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         inAppMessageItem: InAppMessageItem
     ) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMBottomSheet launched")
-        val iAMBottomSheetFragment =
-            IAMBottomSheetFragment.newInstance(inAppMessageItem)
-        iAMBottomSheetFragment.setOnDismissListener(this)
-        iAMBottomSheetFragment.isCancelable = true
-        iAMBottomSheetFragment.show(
+        val iAMTextViewBottomSheetFragment =
+            IAMTextViewBottomSheetFragment.newInstance(inAppMessageItem)
+        iAMTextViewBottomSheetFragment.setOnDismissListener(this)
+        iAMTextViewBottomSheetFragment.isCancelable = true
+        iAMTextViewBottomSheetFragment.show(
             supportFragmentManager,
-            iAMBottomSheetFragment.tag
+            iAMTextViewBottomSheetFragment.tag
         )
     }
-
 
     private fun launchIAMFullScreenWebViewFragment(inAppMessageItem: InAppMessageItem) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewFragment launched")
@@ -163,7 +171,6 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
             .commit()
     }
 
-
     private fun markInAppMessageAsRead() {
         if (mUserId.isNotEmpty()) {
             val inAppMessageHandler = InAppMessageHandler(this, mUserId)
@@ -174,16 +181,12 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
     }
 
     private fun markIAMAsReadAndCloseActivity() {
-        markInAppMessageAsRead()
         finish()
+        markInAppMessageAsRead()
     }
 
     override fun onDismiss() {
         markIAMAsReadAndCloseActivity()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     override fun onFullScreenWebViewClosed() {

@@ -40,7 +40,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
             if (title.isNullOrEmpty()) {
 
                 val popupConfigs = Gson().fromJson(remoteMessage.data["popup_configs"], PopupConfigs::class.java)
-                val getInAppMsgData = popupConfigs.getInAppMsgData
+                val getInAppMsgData = popupConfigs?.getInAppMsgData ?: false
 
                 if (getInAppMsgData) {
                     handleInAppNotification()
