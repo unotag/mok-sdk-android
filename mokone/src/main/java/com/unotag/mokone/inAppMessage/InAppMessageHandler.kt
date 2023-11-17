@@ -42,12 +42,16 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                         val inAppMessageData =
                             gson.fromJson(response.toString(), InAppMessageData::class.java)
 
+                        MokLogger.log(MokLogger.LogLevel.DEBUG, "Before async tasks")
+
                         // Use async to save each in-app message sequentially
                         val deferredResults = inAppMessageData.data?.map { inAppMessage ->
                             val inAppMessageId = inAppMessage?.inAppId
                             val inAppMessageAsString = Gson().toJson(inAppMessage)
                             CoroutineScope(Dispatchers.IO).async {
-                                saveInAppMessageInLocalDb(inAppMessageId, inAppMessageAsString)
+                                MokLogger.log(MokLogger.LogLevel.DEBUG, "Start async task for $inAppMessageId")
+                                saveInAppMessageInLocalDb(inAppMessageId, inAppMessageAsString).await()
+                                MokLogger.log(MokLogger.LogLevel.DEBUG, "Async task completed for $inAppMessageId")
                             }
                         }
                         // Await all the deferred results
@@ -55,11 +59,11 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                             deferredResults?.awaitAll()
                         }
 
-                        callback(inAppMessageData, null)
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
                             "In-App Message data fetched successfully"
                         )
+                        callback(inAppMessageData, null)
                     } catch (e: Exception) {
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
@@ -121,7 +125,6 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                     try {
                         callback?.invoke(response.toString(), null)
 
-                        markIAMAsSeenLocally(inAppMessageId)
 
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
@@ -146,7 +149,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
 
-    private fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
+     fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
         return CoroutineScope(Dispatchers.IO).async {
             val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
@@ -201,6 +204,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
     fun showInAppMessages(limit: Int? = 1) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "showInAppMessages called with limit $limit")
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         coroutineScope.launch {
             try {

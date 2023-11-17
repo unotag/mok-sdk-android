@@ -146,6 +146,7 @@ object MokSDK {
             val inAppMessageHandler = InAppMessageHandler(appContext, userId)
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
+                   MokLogger.log(MokLogger.LogLevel.INFO, "callback received from fetchIAMFromServerAndSaveToDB")
                 inAppMessageHandler.showInAppMessages(maxDisplayedIAMs)
             }
         } else {

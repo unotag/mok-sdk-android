@@ -18,8 +18,8 @@ class IAMTextViewBottomSheetFragment : BottomSheetDialogFragment() {
     companion object {
         private const val ARG_IN_APP_MESSAGE_DATA = "in_app_message_data"
 
-        fun newInstance(inAppMessageItem: InAppMessageItem): IAMWebViewBottomSheetFragment {
-            val fragment = IAMWebViewBottomSheetFragment()
+        fun newInstance(inAppMessageItem: InAppMessageItem): IAMTextViewBottomSheetFragment {
+            val fragment = IAMTextViewBottomSheetFragment()
             val args = Bundle()
             args.putSerializable(ARG_IN_APP_MESSAGE_DATA, inAppMessageItem)
             fragment.arguments = args
@@ -29,15 +29,15 @@ class IAMTextViewBottomSheetFragment : BottomSheetDialogFragment() {
 
     private var mInAppMessageItem: InAppMessageItem? = null
     private lateinit var binding: FragmentIAMBottomSheetBinding
-    private lateinit var dismissListener: OnIAMPopupDismissListener
+    private lateinit var dismissListener: IAMTextViewBottomSheetDismissListener
 
-    fun setOnDismissListener(listener: OnIAMPopupDismissListener) {
+    fun setIAMTextViewBottomSheetDismissListener(listener: IAMTextViewBottomSheetDismissListener) {
         dismissListener = listener
     }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        dismissListener?.onDismiss()
+        dismissListener?.onIAMTextViewBottomSheetDismiss()
     }
 
     override fun onCreateView(
@@ -75,4 +75,8 @@ class IAMTextViewBottomSheetFragment : BottomSheetDialogFragment() {
         binding.descriptionTv.text = jsonData?.text
         binding.contentIv.setImageURI(Uri.parse(jsonData.image))
     }
+}
+
+interface IAMTextViewBottomSheetDismissListener {
+    fun onIAMTextViewBottomSheetDismiss()
 }

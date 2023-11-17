@@ -40,7 +40,10 @@ class IAMImageViewDialog(
 
         if (inAppMessageItem.jsonData != null) {
             val data = inAppMessageItem.jsonData
-            binding.contentIv.setImageURI(Uri.parse(data.image))
+            val image = data.image
+            if (image != null) {
+                binding.contentIv.setImageURI(Uri.parse(data.image))
+            }
         } else {
             MokLogger.log(
                 MokLogger.LogLevel.INFO,

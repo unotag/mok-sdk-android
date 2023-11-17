@@ -17,8 +17,9 @@ enum class MessageType {
     UNKNOWN
 }
 
-class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListener,
-    FullScreenWebViewClosedListener {
+class InAppMessageBaseActivity() : AppCompatActivity(), IAMTextViewBottomSheetDismissListener,
+    IAMImageViewBottomSheetDismissListener, IAMWebViewBottomSheetDismissListener,
+FullScreenWebViewClosedListener {
 
     private lateinit var mInAppMessageId: String
     private lateinit var mUserId: String
@@ -116,7 +117,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
             "bottom_sheet" -> launchIAMTextViewBottomSheet(inAppMessageItem)
             "full_page" -> {}
             "pip_video" -> {}
-            else -> launchIAMTextViewBottomSheet(inAppMessageItem)
+            else -> launchIAMTextViewDialog(inAppMessageItem)
         }
     }
 
@@ -167,8 +168,8 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         MokLogger.log(MokLogger.LogLevel.INFO, "IAM WebView BottomSheet launched")
         val iAMWebViewBottomSheetFragment =
             IAMWebViewBottomSheetFragment.newInstance(inAppMessageItem)
-        iAMWebViewBottomSheetFragment.setOnDismissListener(this)
-        iAMWebViewBottomSheetFragment.isCancelable = true
+        iAMWebViewBottomSheetFragment.setIAMWebViewBottomSheetDismissListener(this)
+        iAMWebViewBottomSheetFragment.isCancelable = false
         iAMWebViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMWebViewBottomSheetFragment.tag
@@ -181,8 +182,8 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         MokLogger.log(MokLogger.LogLevel.INFO, "IAM TextView BottomSheet launched")
         val iAMTextViewBottomSheetFragment =
             IAMTextViewBottomSheetFragment.newInstance(inAppMessageItem)
-        iAMTextViewBottomSheetFragment.setOnDismissListener(this)
-        iAMTextViewBottomSheetFragment.isCancelable = true
+        iAMTextViewBottomSheetFragment.setIAMTextViewBottomSheetDismissListener(this)
+        iAMTextViewBottomSheetFragment.isCancelable = false
         iAMTextViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMTextViewBottomSheetFragment.tag
@@ -195,8 +196,8 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         MokLogger.log(MokLogger.LogLevel.INFO, "IAM ImageView BottomSheet launched")
         val iAMImageViewBottomSheetFragment =
             IAMImageViewBottomSheetFragment.newInstance(inAppMessageItem)
-        iAMImageViewBottomSheetFragment.setOnDismissListener(this)
-        iAMImageViewBottomSheetFragment.isCancelable = true
+        iAMImageViewBottomSheetFragment.setIAMImageViewBottomSheetDismissListener(this)
+        iAMImageViewBottomSheetFragment.isCancelable = false
         iAMImageViewBottomSheetFragment.show(
             supportFragmentManager,
             iAMImageViewBottomSheetFragment.tag
@@ -222,6 +223,7 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         if (mUserId.isNotEmpty()) {
             val inAppMessageHandler = InAppMessageHandler(this, mUserId)
             inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
+            inAppMessageHandler.markIAMAsSeenLocally(mInAppMessageId)
         } else {
             MokLogger.log(MokLogger.LogLevel.ERROR, "User Id is null, contact mok team")
         }
@@ -232,11 +234,20 @@ class InAppMessageBaseActivity() : AppCompatActivity(), OnIAMPopupDismissListene
         markInAppMessageAsRead()
     }
 
-    override fun onDismiss() {
+
+    override fun onFullScreenWebViewClosed() {
         markIAMAsReadAndCloseActivity()
     }
 
-    override fun onFullScreenWebViewClosed() {
+    override fun onIAMImageViewBottomSheetDismiss() {
+        markIAMAsReadAndCloseActivity()
+    }
+
+    override fun onIAMTextViewBottomSheetDismiss() {
+        markIAMAsReadAndCloseActivity()
+    }
+
+    override fun onIAMWebViewBottomSheetDismiss() {
         markIAMAsReadAndCloseActivity()
     }
 }
