@@ -59,7 +59,8 @@ class DashboardFragment : Fragment() {
         }
 
         binding.fetchFcmBtn.setOnClickListener {
-            getFcmToken()
+            MokSDK.launchPipVideo()
+           // getFcmToken()
         }
 
         binding.updateFcmBtn.setOnClickListener {

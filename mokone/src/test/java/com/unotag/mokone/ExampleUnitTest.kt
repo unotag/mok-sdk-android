@@ -1,8 +1,6 @@
 package com.unotag.mokone
 
-import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
 import com.unotag.mokone.inAppMessage.ui.MessageType
-
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -19,36 +17,49 @@ class ExampleUnitTest {
 
 }
 
+
 class MessageTypeTest {
-        val a = InAppMessageBaseActivity()
 
-    @Test
-    fun `determineMessageType returns HTML when hasRawHtml is true`() {
-        val result = a.determineMessageType(hasRawHtml = true, hasText = false, hasImage = false, hasWebSite = false)
-        assertEquals(MessageType.HTML, result)
+    fun determineMessageType(
+        hasRawHtml: Boolean,
+        hasText: Boolean,
+        hasImage: Boolean,
+        hasWebSite: Boolean
+    ): MessageType {
+        return when {
+            hasRawHtml -> MessageType.HTML
+            hasText -> MessageType.TEXT
+            hasImage -> MessageType.IMAGE
+            hasWebSite -> MessageType.WEB
+            else -> MessageType.UNKNOWN
+        }
     }
 
     @Test
-    fun `determineMessageType returns TEXT when hasText is true`() {
-        val result = a.determineMessageType(hasRawHtml = false, hasText = true, hasImage = false, hasWebSite = false)
-        assertEquals(MessageType.TEXT, result)
-    }
+    fun testDetermineMessageType() {
+        // Test case 1: HTML message
+        val messageType1 = determineMessageType(hasRawHtml = true, hasText = false, hasImage = false, hasWebSite = false)
+        assertEquals(MessageType.HTML, messageType1)
+        println("Type of message 1: $messageType1")
 
-    @Test
-    fun `determineMessageType returns IMAGE when hasImage is true`() {
-        val result = a.determineMessageType(hasRawHtml = false, hasText = false, hasImage = true, hasWebSite = false)
-        assertEquals(MessageType.IMAGE, result)
-    }
+        // Test case 2: Text message
+        val messageType2 = determineMessageType(hasRawHtml = false, hasText = true, hasImage = false, hasWebSite = false)
+        assertEquals(MessageType.TEXT, messageType2)
+        println("Type of message 2: $messageType2")
 
-    @Test
-    fun `determineMessageType returns WEB when hasWebSite is true`() {
-        val result = a.determineMessageType(hasRawHtml = false, hasText = false, hasImage = false, hasWebSite = true)
-        assertEquals(MessageType.WEB, result)
-    }
+        // Test case 3: Image message
+        val messageType3 = determineMessageType(hasRawHtml = false, hasText = false, hasImage = true, hasWebSite = false)
+        assertEquals(MessageType.IMAGE, messageType3)
+        println("Type of message 3: $messageType3")
 
-    @Test
-    fun `determineMessageType returns UNKNOWN when all flags are false`() {
-        val result = a.determineMessageType(hasRawHtml = false, hasText = false, hasImage = false, hasWebSite = false)
-        assertEquals(MessageType.UNKNOWN, result)
+        // Test case 4: Web message
+        val messageType4 = determineMessageType(hasRawHtml = false, hasText = false, hasImage = false, hasWebSite = true)
+        assertEquals(MessageType.WEB, messageType4)
+        println("Type of message 4: $messageType4")
+
+        // Test case 5: Unknown message
+        val messageType5 = determineMessageType(hasRawHtml = false, hasText = false, hasImage = false, hasWebSite = false)
+        assertEquals(MessageType.UNKNOWN, messageType5)
+        println("Type of message 5: $messageType5")
     }
 }

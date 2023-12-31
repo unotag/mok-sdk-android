@@ -12,7 +12,7 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 33
-        versionName '0.0.29'
+        versionName '0.0.30'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -67,6 +67,11 @@ dependencies {
     implementation "androidx.webkit:webkit:1.8.0"
 
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    //Exoplayer
+    implementation "androidx.media3:media3-exoplayer:1.2.0"
+    implementation "androidx.media3:media3-ui:1.2.0"
+    implementation "androidx.media3:media3-common:1.2.0"
 
 }
 apply from: 'gradle-scripts/publish-root.gradle'

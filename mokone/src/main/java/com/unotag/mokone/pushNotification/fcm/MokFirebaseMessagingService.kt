@@ -9,6 +9,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
+import android.text.TextUtils
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -20,6 +22,7 @@ import com.unotag.mokone.R
 import com.unotag.mokone.inAppMessage.data.PopupConfigs
 import com.unotag.mokone.pushNotification.NotificationRenderer
 import com.unotag.mokone.utils.MokLogger
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -27,6 +30,12 @@ import java.net.URL
 
 class MokFirebaseMessagingService : FirebaseMessagingService() {
 
+    val imagesList: MutableList<String> =
+        arrayListOf(
+            "https://www.defenceconnect.com.au/images-backup/Technology/Medical-injections.jpg",
+            "https://image.freepik.com/free-psd/plastic-pill-bottle-with-colorful-vitamins-mockup_7956-755.jpg",
+            "https://images.squarespace-cdn.com/content/v1/5ab6762de2ccd18f9039391d/1532011051373-ZG46GDbQiz7iBIgNCzklBDD2o6CESiqIlH5ssNFrtmA/image-asset.jpeg"
+        )
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
 
@@ -39,7 +48,8 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
 
             if (title.isNullOrEmpty()) {
 
-                val popupConfigs = Gson().fromJson(remoteMessage.data["popup_configs"], PopupConfigs::class.java)
+                val popupConfigs =
+                    Gson().fromJson(remoteMessage.data["popup_configs"], PopupConfigs::class.java)
                 val getInAppMsgData = popupConfigs?.getInAppMsgData ?: false
 
                 if (getInAppMsgData) {
@@ -54,6 +64,7 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
                 sendNotification(title, body, bigPicture, bigLargeIcon)
             } else {
                 sendNotification(title, body)
+                setNotificationSliderData("test", "body", imagesList)
             }
         }
     }
@@ -164,6 +175,109 @@ class MokFirebaseMessagingService : FirebaseMessagingService() {
         val notificationId = System.currentTimeMillis().toInt()
         notificationManager.notify(notificationId, notificationBuilder.build())
     }
+
+
+    private fun setNotificationSliderData(
+        title: String,
+        notificationMessage: String?,
+        imagesList: MutableList<String>
+    ) {
+        // parent notification layout
+        val expandedView = RemoteViews(packageName, R.layout.notification_image_slider_layout)
+// notification title
+        expandedView.setTextViewText(R.id.textViewTitle, title)
+        for (imgUrl: String in imagesList) {
+            //for loop start
+            val viewFlipperImage = RemoteViews(packageName, R.layout.view_notification_image)
+            if (TextUtils.isEmpty(imgUrl)) {
+                // set default image
+                viewFlipperImage.setImageViewResource(
+                    R.id.imageView, NotificationRenderer.getSmallNotificationIcon()
+                )
+            } else {
+                try {
+                    val remotePicture = getBitmapFromUrl(imgUrl)
+                    viewFlipperImage.setImageViewBitmap(
+                        R.id.imageView, remotePicture
+                    )
+                } catch (e: IOException) {
+                    // set default image
+                    viewFlipperImage.setImageViewResource(
+                        R.id.imageView,
+                        NotificationRenderer.getSmallNotificationIcon()
+                    )
+                }
+            }
+            // Adding each image view in the viewflipper.
+            expandedView.addView(R.id.viewFlipper, viewFlipperImage)
+        } // for loop finish
+        showNotificationForNotificationList(
+            title,
+            notificationMessage!!,
+            expandedView
+        )
+    }
+
+
+    private fun showNotificationForNotificationList(
+        title: String,
+        notificationDesc: String,
+        expandedView: RemoteViews
+    ) {
+        generateBigTextNotificationForNotificationList(
+            this,
+            title,
+            "test",
+            expandedView
+        )
+    }
+
+    fun generateBigTextNotificationForNotificationList(
+        context: Context,
+        notificationTitle: String?,
+        notificationMessage: String?,
+        expandedView: RemoteViews
+    ) {
+        val channelId = "my_channel_id"
+        val notification_id = 0
+        val requestCode = 0
+        val launchIntent = getLaunchIntent()
+        val bigTextStyle = NotificationCompat.BigTextStyle()
+        bigTextStyle.bigText(notificationMessage)
+        bigTextStyle.setSummaryText(notificationTitle)
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(NotificationRenderer.getSmallNotificationIcon())
+            .setLargeIcon(
+                BitmapFactory.decodeResource
+                    (context.resources, NotificationRenderer.getSmallNotificationIcon())
+            ) // optional
+
+            .setContentIntent(getPendingIntent(launchIntent, requestCode))
+            .setContentTitle(notificationTitle)
+            .setContentText(notificationMessage)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomBigContentView(expandedView)
+            .setStyle(bigTextStyle)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId, "Default Channel",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notificationId = System.currentTimeMillis().toInt()
+        notificationManager.notify(notificationId, builder.build())
+    }
+
 
 
     private fun getBitmapFromUrl(imageUrl: String?): Bitmap? {
