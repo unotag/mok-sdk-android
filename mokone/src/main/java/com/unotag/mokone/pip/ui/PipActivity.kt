@@ -2,11 +2,13 @@ package com.unotag.mokone.pip.ui
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.Rational
+import android.view.View
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -35,10 +37,12 @@ class PipActivity : AppCompatActivity() {
     private var playbackPosition = 0L
     private var mVideoAspectVideo = Rational(1,1)
 
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
+
 
         viewBinding.closeVideoIv.setOnClickListener {
             minimize()
@@ -76,8 +80,12 @@ class PipActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(UnstableApi::class) @RequiresApi(Build.VERSION_CODES.O)
+    @OptIn(UnstableApi::class)
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun initializePlayer() {
+        viewBinding.videoView.setShowPreviousButton(false)
+        viewBinding.videoView.setShowNextButton(false)
+
         // ExoPlayer implements the Player interface
         player = ExoPlayer.Builder(this)
             .build()
@@ -93,19 +101,22 @@ class PipActivity : AppCompatActivity() {
                     .setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
                     .setMimeType(MimeTypes.APPLICATION_MP4)
                     .build()
+
                 exoPlayer.setMediaItems(listOf(mediaItem), mediaItemIndex, playbackPosition)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.addListener(playbackStateListener)
+                // Calculate and set the aspect ratio
+                val videoWidth: Int? = exoPlayer.videoFormat?.width
+                val videoHeight: Int? = exoPlayer.videoFormat?.height
+
+                if (videoWidth != null && videoHeight != null) {
+                    mVideoAspectVideo = Rational(videoWidth, videoHeight)
+                }
+
                 exoPlayer.prepare()
             }
 
-        // Calculate and set the aspect ratio
-        val videoWidth: Int? = (player as ExoPlayer).videoFormat?.width
-        val videoHeight: Int? = (player as ExoPlayer).videoFormat?.height
 
-        if (videoWidth != null && videoHeight != null) {
-            mVideoAspectVideo = Rational(videoWidth, videoHeight)
-        }
 
         // Configure parameters for the picture-in-picture mode. We do this at the first layout of
         // the MovieView because we use its layout position and size.
@@ -125,6 +136,7 @@ class PipActivity : AppCompatActivity() {
     }
 
 
+   // @RequiresApi(Build.VERSION_CODES.O)
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updatePictureInPictureParams(aspectRatio : Rational): PictureInPictureParams {
         // Calculate the aspect ratio of the PiP screen.
@@ -132,17 +144,31 @@ class PipActivity : AppCompatActivity() {
         // The movie view turns into the picture-in-picture mode.
         val visibleRect = Rect()
         viewBinding.videoView.getGlobalVisibleRect(visibleRect)
-        val params = PictureInPictureParams.Builder()
-            .setAspectRatio(aspectRatio)
-            // Specify the portion of the screen that turns into the picture-in-picture mode.
-            // This makes the transition animation smoother.
-            .setSourceRectHint(visibleRect)
-            // The screen automatically turns into the picture-in-picture mode when it is hidden
-            // by the "Home" button.
-            //.setAutoEnterEnabled(true)
-            .build()
-        setPictureInPictureParams(params)
-        return params
+
+        if (Build.VERSION.SDK_INT > 30) {
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                // Specify the portion of the screen that turns into the picture-in-picture mode.
+                // This makes the transition animation smoother.
+                .setSourceRectHint(visibleRect)
+                // The screen automatically turns into the picture-in-picture mode when it is hidden
+                // by the "Home" button.
+                .setAutoEnterEnabled(true)
+                .setSeamlessResizeEnabled(true)
+                .build()
+            setPictureInPictureParams(params)
+            return params
+        }else{
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(aspectRatio)
+                // Specify the portion of the screen that turns into the picture-in-picture mode.
+                // This makes the transition animation smoother.
+                .setSourceRectHint(visibleRect)
+                .build()
+            setPictureInPictureParams(params)
+            return params
+        }
+
     }
 
 
@@ -152,6 +178,26 @@ class PipActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun minimize() {
         enterPictureInPictureMode(updatePictureInPictureParams(mVideoAspectVideo))
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        if (isInPictureInPictureMode) {
+            viewBinding.closeVideoIv.visibility = View.GONE
+        } else {
+            viewBinding.closeVideoIv.visibility = View.VISIBLE
+        }
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isInPictureInPictureMode) {
+            finish()
+        }
     }
 
 
