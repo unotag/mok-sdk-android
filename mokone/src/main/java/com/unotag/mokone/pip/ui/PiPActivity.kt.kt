@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.doOnLayout
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
@@ -23,7 +24,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.unotag.mokone.databinding.ActivityPipBinding
 
 
-class PipActivity : AppCompatActivity() {
+class PiPActivity : AppCompatActivity() {
 
     private val viewBinding by lazy(LazyThreadSafetyMode.NONE) {
         ActivityPipBinding.inflate(layoutInflater)
@@ -35,7 +36,7 @@ class PipActivity : AppCompatActivity() {
     private var playWhenReady = true
     private var mediaItemIndex = 0
     private var playbackPosition = 0L
-    private var mVideoAspectVideo = Rational(1,1)
+    private var mVideoAspectVideo = Rational(9,16)
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -44,9 +45,14 @@ class PipActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
 
+        // Configure parameters for the picture-in-picture mode. We do this at the first layout of
+        // the MovieView because we use its layout position and size.
+        viewBinding.videoView.doOnLayout { updatePictureInPictureParams(mVideoAspectVideo) }
+
         viewBinding.closeVideoIv.setOnClickListener {
             minimize()
         }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -60,7 +66,7 @@ class PipActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     public override fun onResume() {
         super.onResume()
-        hideSystemUi()
+       // hideSystemUi()
         if (Build.VERSION.SDK_INT <= 23 || player == null) {
             initializePlayer()
         }
@@ -80,9 +86,10 @@ class PipActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.O)
+    @OptIn(UnstableApi::class)
     private fun initializePlayer() {
+
         viewBinding.videoView.setShowPreviousButton(false)
         viewBinding.videoView.setShowNextButton(false)
 
@@ -98,21 +105,14 @@ class PipActivity : AppCompatActivity() {
                     .build()
 
                 val mediaItem = MediaItem.Builder()
-                    .setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                  //   .setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                     .setUri("https://assets.mixkit.co/videos/preview/mixkit-girls-leaving-easter-eggs-in-baskets-48597-large.mp4")
                     .setMimeType(MimeTypes.APPLICATION_MP4)
                     .build()
 
                 exoPlayer.setMediaItems(listOf(mediaItem), mediaItemIndex, playbackPosition)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.addListener(playbackStateListener)
-                // Calculate and set the aspect ratio
-                val videoWidth: Int? = exoPlayer.videoFormat?.width
-                val videoHeight: Int? = exoPlayer.videoFormat?.height
-
-                if (videoWidth != null && videoHeight != null) {
-                    mVideoAspectVideo = Rational(videoWidth, videoHeight)
-                }
-
                 exoPlayer.prepare()
             }
 
@@ -120,7 +120,7 @@ class PipActivity : AppCompatActivity() {
 
         // Configure parameters for the picture-in-picture mode. We do this at the first layout of
         // the MovieView because we use its layout position and size.
-        updatePictureInPictureParams(mVideoAspectVideo)
+       // updatePictureInPictureParams(mVideoAspectVideo)
         minimize()
     }
 
@@ -136,12 +136,12 @@ class PipActivity : AppCompatActivity() {
     }
 
 
-   // @RequiresApi(Build.VERSION_CODES.O)
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updatePictureInPictureParams(aspectRatio : Rational): PictureInPictureParams {
         // Calculate the aspect ratio of the PiP screen.
        // val aspectRatio = Rational(2,2)
         // The movie view turns into the picture-in-picture mode.
+
         val visibleRect = Rect()
         viewBinding.videoView.getGlobalVisibleRect(visibleRect)
 
@@ -191,14 +191,6 @@ class PipActivity : AppCompatActivity() {
         }
     }
 
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        if (isInPictureInPictureMode) {
-            finish()
-        }
-    }
 
 
 

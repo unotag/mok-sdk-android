@@ -11,7 +11,7 @@ import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
-import com.unotag.mokone.pip.ui.PipActivity
+import com.unotag.mokone.pip.ui.PiPActivity
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
@@ -163,12 +163,11 @@ object MokSDK {
 
 //region Pip
 fun launchPipVideo() {
-    val intent = Intent(appContext, PipActivity::class.java)
+    val intent = Intent(appContext, PiPActivity::class.java)
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
     appContext.startActivity(intent)
-}
+}//region Pip
 
-//endregion
 
 
     //TODO: Delete this before going live
