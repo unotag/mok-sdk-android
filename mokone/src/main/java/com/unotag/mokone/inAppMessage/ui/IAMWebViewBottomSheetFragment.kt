@@ -29,15 +29,15 @@ class IAMWebViewBottomSheetFragment : BottomSheetDialogFragment() {
 
     private var mInAppMessageItem: InAppMessageItem? = null
     private lateinit var binding: FragmentIAMWebviewBottomSheetBinding
-    private lateinit var dismissListener: OnIAMPopupDismissListener
+    private lateinit var dismissListener: IAMWebViewBottomSheetDismissListener
 
-    fun setOnDismissListener(listener: OnIAMPopupDismissListener) {
+    fun setIAMWebViewBottomSheetDismissListener(listener: IAMWebViewBottomSheetDismissListener) {
         dismissListener = listener
     }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        dismissListener.onDismiss()
+        dismissListener.onIAMWebViewBottomSheetDismiss()
     }
 
     @Suppress("DEPRECATION")
@@ -77,4 +77,8 @@ class IAMWebViewBottomSheetFragment : BottomSheetDialogFragment() {
         binding.webViewBottomSheet.settings.javaScriptEnabled = true
         binding.webViewBottomSheet.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
     }
+}
+
+interface IAMWebViewBottomSheetDismissListener {
+    fun onIAMWebViewBottomSheetDismiss()
 }

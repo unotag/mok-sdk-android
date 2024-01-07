@@ -40,9 +40,12 @@ class IAMTextViewDialog(
 
         if (inAppMessageItem.jsonData != null) {
             val data = inAppMessageItem.jsonData
-            binding.titleTv.text = data?.title
-            binding.descriptionTv.text = data?.text
-            binding.contentIv.setImageURI(Uri.parse(data.image))
+            binding.titleTv.text = data.title
+            binding.descriptionTv.text = data.text
+            val image = data.image
+            if (image != null) {
+                binding.contentIv.setImageURI(Uri.parse(data.image))
+            }
         } else {
             MokLogger.log(
                 MokLogger.LogLevel.INFO,
@@ -50,11 +53,16 @@ class IAMTextViewDialog(
             )
         }
 
-        // Adjust the dialog's size based on the content height
+
+
+        //Adjust the dialog's size based on the content height
         val layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
+
+        val screenWidth = context.resources.displayMetrics.widthPixels
+        layoutParams.width = screenWidth - 100
         window?.setLayout(layoutParams.width, layoutParams.height)
     }
 

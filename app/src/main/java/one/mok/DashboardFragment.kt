@@ -34,7 +34,6 @@ class DashboardFragment : Fragment() {
         return binding.root
     }
 
-
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
@@ -59,7 +58,8 @@ class DashboardFragment : Fragment() {
         }
 
         binding.fetchFcmBtn.setOnClickListener {
-            getFcmToken()
+            MokSDK.launchPipVideo()
+           // getFcmToken()
         }
 
         binding.updateFcmBtn.setOnClickListener {

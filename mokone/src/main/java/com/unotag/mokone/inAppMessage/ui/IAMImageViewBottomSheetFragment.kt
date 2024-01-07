@@ -18,8 +18,8 @@ class IAMImageViewBottomSheetFragment : BottomSheetDialogFragment() {
     companion object {
         private const val ARG_IN_APP_MESSAGE_DATA = "in_app_message_data"
 
-        fun newInstance(inAppMessageItem: InAppMessageItem): IAMWebViewBottomSheetFragment {
-            val fragment = IAMWebViewBottomSheetFragment()
+        fun newInstance(inAppMessageItem: InAppMessageItem): IAMImageViewBottomSheetFragment {
+            val fragment = IAMImageViewBottomSheetFragment()
             val args = Bundle()
             args.putSerializable(ARG_IN_APP_MESSAGE_DATA, inAppMessageItem)
             fragment.arguments = args
@@ -29,15 +29,15 @@ class IAMImageViewBottomSheetFragment : BottomSheetDialogFragment() {
 
     private var mInAppMessageItem: InAppMessageItem? = null
     private lateinit var binding: FragmentIAMIamgeViewBottomSheetBinding
-    private lateinit var dismissListener: OnIAMPopupDismissListener
+    private lateinit var dismissListener: IAMImageViewBottomSheetDismissListener
 
-    fun setOnDismissListener(listener: OnIAMPopupDismissListener) {
+    fun setIAMImageViewBottomSheetDismissListener(listener: IAMImageViewBottomSheetDismissListener) {
         dismissListener = listener
     }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        dismissListener?.onDismiss()
+        dismissListener?.onIAMImageViewBottomSheetDismiss()
     }
 
     override fun onCreateView(
@@ -64,13 +64,17 @@ class IAMImageViewBottomSheetFragment : BottomSheetDialogFragment() {
             MokLogger.log(MokLogger.LogLevel.ERROR, "Json data is empty")
         }
 
-        binding.confirmBtn.setOnClickListener {
-            dismiss()
-        }
+//        binding.confirmBtn.setOnClickListener {
+//            dismiss()
+//        }
     }
 
 
     private fun initViews(jsonData: JsonData) {
         binding.contentIv.setImageURI(Uri.parse(jsonData.image))
     }
+}
+
+interface IAMImageViewBottomSheetDismissListener {
+    fun onIAMImageViewBottomSheetDismiss()
 }

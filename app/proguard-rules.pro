@@ -19,3 +19,28 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep all classes in the 'com.unotag.mokone' namespace
+-keep class com.unotag.mokone.** { *; }
+
+# Keep public methods in 'com.unotag.mokone' namespace
+-keepclassmembers class com.unotag.mokone.** {
+    public <methods>;
+}
+
+# Keep enums in 'com.unotag.mokone' namespace
+-keepclassmembers enum com.unotag.mokone.** { *; }
+
+# Keep resource files (if applicable)
+#-keepresources res/drawablee/your_sdk_icon.png
+
+# Keep serialization/deserialization methods (if applicable)
+-keepclassmembers class com.unotag.mokone.** {
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+
+# Keep any third-party dependencies used by 'com.unotag.mokone'
+-keep class your.thirdparty.library.** { *; }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Required for push notifications -->
@@ -7,12 +8,16 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
-
         <activity
-            android:name=".inAppMessage.ui.IAMFullScreenWebViewActivity"
-            android:exported="false"
-            android:theme="@style/FullScreenWebViewTheme"/>
-
+            android:name=".carousel.CarouselActivity"
+            android:exported="false" />
+        <activity
+            android:name=".pip.ui.PiPActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:exported="true"
+            android:supportsPictureInPicture="true"
+            android:theme="@style/FullScreenWebViewTheme"
+            tools:targetApi="n" />
         <activity
             android:name=".inAppMessage.ui.InAppMessageBaseActivity"
             android:exported="false"
