@@ -5,10 +5,17 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.viewpager2.widget.ViewPager2
+import com.google.gson.Gson
+import com.unotag.mokone.MokSDK
 import com.unotag.mokone.R
+import com.unotag.mokone.carousel.data.CarouselContent
+import com.unotag.mokone.carousel.data.CarouselResponse
+import com.unotag.mokone.network.MokApiCallTask
+import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.utils.MokLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -16,41 +23,110 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
 class CarouselView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
 
+
     private lateinit var infiniteViewPager: ViewPager2
     private lateinit var infiniteRecyclerAdapter: InfiniteRecyclerAdapter
-    private var carouselItemList: MutableList<CarouselItem> = mutableListOf()
+    private var carouselItemList: MutableList<CarouselContent> = mutableListOf()
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private var isAutoScrolling = false
 
     init {
-        layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+        getCarouselContent()
+    }
 
+    private fun getCarouselContent(
+    ) {
+        val apiCallTask = MokApiCallTask()
+        val userId = MokSDK.getUserId()
+
+        apiCallTask.performApiCall(
+            MokApiConstants.BASE_URL + MokApiConstants.URL_CAROUSEL_DATA + userId,
+            MokApiCallTask.HttpMethod.GET,
+            MokApiCallTask.MokRequestMethod.READ
+        ) { result ->
+            handleCarouselResult(result)
+        }
+    }
+
+
+
+    private fun handleCarouselResult(
+        result: MokApiCallTask.ApiResult,
+    ) {
+        when (result) {
+            is MokApiCallTask.ApiResult.Success -> {
+                val response = result.response
+                val gson = Gson()
+                val carouselResponse: CarouselResponse =
+                    gson.fromJson(response.toString(), CarouselResponse::class.java)
+                carouselResponse.data?.get(0)?.caraousel_content
+                    ?.let {
+                        carouselItemList.addAll(it)
+                        reload()
+                    }
+            }
+
+            is MokApiCallTask.ApiResult.Error -> {
+                MokLogger.log(MokLogger.LogLevel.ERROR, "Carousel api has error")
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "error: ${result.exception.localizedMessage}"
+                )
+            }
+            else -> {
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "Unknown error in Carousel api has occurred"
+                )
+            }
+        }
+
+    }
+
+
+    private fun reloadView() {
+        // Inflate the layout containing the ViewPager
         val inflater = LayoutInflater.from(context)
         val carouselView: View = inflater.inflate(R.layout.carousel_view, this)
 
+        // Find the ViewPager in the inflated layout
         infiniteViewPager = carouselView.findViewById(R.id.viewPager)
 
-        val carouselItemList = mutableListOf<CarouselItem>()
-        carouselItemList.add(CarouselItem("https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"))
-        carouselItemList.add(CarouselItem("https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg"))
-        carouselItemList.add(CarouselItem("https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg"))
-        carouselItemList.add(CarouselItem("https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg"))
+        // Check if the carouselItemList is not empty
+        if (carouselItemList.isNotEmpty()) {
+            val linearLayout = LinearLayout(context)
+            val layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            linearLayout.layoutParams = layoutParams
+                // Set up the CarouselView with the provided carouselItemList
+                setupCarousel(carouselItemList)
+                // Start auto-scrolling
+                startAutoScroll()
 
-        setupCarousel(carouselItemList)
-        startAutoScroll()
+        } else {
+            // If the list is empty, hide the entire CarouselView
+            visibility = View.GONE
+            stopAutoScroll()
+        }
     }
 
-    private fun setupCarousel(carouselItemList: List<CarouselItem>) {
+    // Public function to reload or refresh the view
+    fun reload() {
+        post {
+            reloadView()
+        }
+    }
+
+    private fun setupCarousel(carouselItemList: List<CarouselContent>) {
         this.carouselItemList.addAll(carouselItemList)
 
         infiniteRecyclerAdapter = InfiniteRecyclerAdapter(carouselItemList)
@@ -88,22 +164,26 @@ class CarouselView @JvmOverloads constructor(
     }
 
     fun startAutoScroll() {
-        // Start a coroutine for auto-scrolling
-        coroutineScope.launch {
-            while (true) {
-                // Delay for a specified duration
-                delay(3000L)
+        // Start a coroutine for auto-scrolling if not already scrolling
+        if (!isAutoScrolling) {
+            coroutineScope.launch {
+                while (true) {
+                    // Delay for a specified duration
+                    delay(3000L)
 
-                // Switch to the main thread to update UI
-                withContext(Dispatchers.Main) {
-                    // Increment the current item to simulate auto-scrolling
-                    infiniteViewPager.setCurrentItem(infiniteViewPager.currentItem + 1, true)
+                    // Switch to the main thread to update UI
+                    withContext(Dispatchers.Main) {
+                        // Increment the current item to simulate auto-scrolling
+                        infiniteViewPager.setCurrentItem(infiniteViewPager.currentItem + 1, true)
+                    }
                 }
             }
+            isAutoScrolling = true
         }
     }
 
     fun stopAutoScroll() {
         coroutineScope.cancel()
+        isAutoScrolling = false
     }
 }

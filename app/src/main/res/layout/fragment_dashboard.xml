@@ -7,14 +7,14 @@
     android:background="@color/colorBackground"
     tools:context=".MainActivity">
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <com.unotag.mokone.carousel.CarouselView
-            android:layout_width="match_parent"
-            android:layout_height="200dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -274,5 +274,10 @@
 
     </LinearLayout>
 
+        <com.unotag.mokone.carousel.CarouselView
+            android:id="@+id/cat"
+            android:layout_width="match_parent"
+            android:layout_height="200dp" />
+    </RelativeLayout>
 
 </ScrollView>

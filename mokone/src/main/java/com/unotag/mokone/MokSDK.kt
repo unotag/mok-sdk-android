@@ -66,7 +66,7 @@ object MokSDK {
 
         GlobalScope.launch {
             kotlinx.coroutines.delay(delayMillis ?: 1000)
-            requestIAMFromServerAndShow(maxDisplayedIAMs ?: 5)
+            //requestIAMFromServerAndShow(maxDisplayedIAMs ?: 5)
         }
     }
 

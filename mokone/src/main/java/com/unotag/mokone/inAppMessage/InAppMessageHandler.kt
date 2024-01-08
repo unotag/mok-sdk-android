@@ -23,7 +23,6 @@ import kotlinx.coroutines.withContext
 
 class InAppMessageHandler(private val context: Context, private val userId: String) {
 
-
     fun fetchIAMFromServerAndSaveToDB(
         callback: (inAppMessageData: InAppMessageData?, error: String?) -> Unit
     ) {
