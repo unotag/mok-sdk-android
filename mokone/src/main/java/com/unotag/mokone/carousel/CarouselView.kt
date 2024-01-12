@@ -55,39 +55,37 @@ class CarouselView @JvmOverloads constructor(
         }
     }
 
-
-
     private fun handleCarouselResult(
         result: MokApiCallTask.ApiResult,
     ) {
         when (result) {
             is MokApiCallTask.ApiResult.Success -> {
+
                 val response = result.response
                 val gson = Gson()
                 val carouselResponse: CarouselResponse =
                     gson.fromJson(response.toString(), CarouselResponse::class.java)
-                carouselResponse.data?.get(0)?.caraousel_content
-                    ?.let {
-                        carouselItemList.addAll(it)
-                        reload()
-                    }
+                if (carouselResponse.data?.isNotEmpty() == true) {
+                    carouselResponse.data[0].caraousel_content
+                        ?.let {
+                            carouselItemList.addAll(it)
+                        }
+                }
+                reload()
             }
-
             is MokApiCallTask.ApiResult.Error -> {
                 MokLogger.log(MokLogger.LogLevel.ERROR, "Carousel api has error")
-                MokLogger.log(
-                    MokLogger.LogLevel.ERROR,
-                    "error: ${result.exception.localizedMessage}"
-                )
+                MokLogger.log(MokLogger.LogLevel.ERROR, "error: ${result.exception.localizedMessage}")
+                reload()
             }
             else -> {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
                     "Unknown error in Carousel api has occurred"
                 )
+                reload()
             }
         }
-
     }
 
 

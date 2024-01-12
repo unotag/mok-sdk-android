@@ -2,7 +2,6 @@ package com.unotag.mokone
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.helper.ManifestReader
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
@@ -11,7 +10,6 @@ import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
-import com.unotag.mokone.pip.ui.PiPActivity
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
@@ -66,7 +64,7 @@ object MokSDK {
 
         GlobalScope.launch {
             kotlinx.coroutines.delay(delayMillis ?: 1000)
-            //requestIAMFromServerAndShow(maxDisplayedIAMs ?: 5)
+            requestIAMFromServerAndShow(maxDisplayedIAMs ?: 5)
         }
     }
 
@@ -161,12 +159,7 @@ object MokSDK {
 
 //endregion
 
-//region Pip
-fun launchPipVideo() {
-    val intent = Intent(appContext, PiPActivity::class.java)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    appContext.startActivity(intent)
-}//region Pip
+
 
 
 

@@ -22,6 +22,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.unotag.mokone.databinding.ActivityPipBinding
+import com.unotag.mokone.inAppMessage.InAppMessageHandler
+import com.unotag.mokone.inAppMessage.data.InAppMessageItem
+import com.unotag.mokone.utils.MokLogger
 
 
 class PiPActivity : AppCompatActivity() {
@@ -36,7 +39,11 @@ class PiPActivity : AppCompatActivity() {
     private var playWhenReady = true
     private var mediaItemIndex = 0
     private var playbackPosition = 0L
-    private var mVideoAspectVideo = Rational(9,16)
+    private var mVideoAspectVideo = Rational(9, 16)
+
+    private lateinit var mVideoUrl: String
+    private lateinit var mInAppMessageId: String
+    private lateinit var mUserId: String
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -44,6 +51,16 @@ class PiPActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(viewBinding.root)
 
+        val inAppMessageItem: InAppMessageItem? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getSerializableExtra("in_app_message_data", InAppMessageItem::class.java)
+            } else {
+                intent.getSerializableExtra("in_app_message_data") as InAppMessageItem
+            }
+
+        this.mVideoUrl = inAppMessageItem?.jsonData?.popupConfigs?.videoUrl ?: "NA"
+        this.mInAppMessageId = inAppMessageItem?.inAppId ?: "NA"
+        this.mUserId = inAppMessageItem?.clientId ?: "NA"
 
         // Configure parameters for the picture-in-picture mode. We do this at the first layout of
         // the MovieView because we use its layout position and size.
@@ -52,6 +69,7 @@ class PiPActivity : AppCompatActivity() {
         viewBinding.closeVideoIv.setOnClickListener {
             minimize()
         }
+        markInAppMessageAsRead()
 
     }
 
@@ -66,7 +84,7 @@ class PiPActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     public override fun onResume() {
         super.onResume()
-       // hideSystemUi()
+        // hideSystemUi()
         if (Build.VERSION.SDK_INT <= 23 || player == null) {
             initializePlayer()
         }
@@ -105,8 +123,9 @@ class PiPActivity : AppCompatActivity() {
                     .build()
 
                 val mediaItem = MediaItem.Builder()
-                  //   .setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
-                     .setUri("https://assets.mixkit.co/videos/preview/mixkit-girls-leaving-easter-eggs-in-baskets-48597-large.mp4")
+                    //.setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                    .setUri("https://assets.mixkit.co/videos/preview/mixkit-girls-leaving-easter-eggs-in-baskets-48597-large.mp4")
+                    //.setUri(mVideoUrl)
                     .setMimeType(MimeTypes.APPLICATION_MP4)
                     .build()
 
@@ -117,10 +136,9 @@ class PiPActivity : AppCompatActivity() {
             }
 
 
-
         // Configure parameters for the picture-in-picture mode. We do this at the first layout of
         // the MovieView because we use its layout position and size.
-       // updatePictureInPictureParams(mVideoAspectVideo)
+        // updatePictureInPictureParams(mVideoAspectVideo)
         minimize()
     }
 
@@ -137,9 +155,9 @@ class PiPActivity : AppCompatActivity() {
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updatePictureInPictureParams(aspectRatio : Rational): PictureInPictureParams {
+    private fun updatePictureInPictureParams(aspectRatio: Rational): PictureInPictureParams {
         // Calculate the aspect ratio of the PiP screen.
-       // val aspectRatio = Rational(2,2)
+        // val aspectRatio = Rational(2,2)
         // The movie view turns into the picture-in-picture mode.
 
         val visibleRect = Rect()
@@ -158,7 +176,7 @@ class PiPActivity : AppCompatActivity() {
                 .build()
             setPictureInPictureParams(params)
             return params
-        }else{
+        } else {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(aspectRatio)
                 // Specify the portion of the screen that turns into the picture-in-picture mode.
@@ -182,7 +200,10 @@ class PiPActivity : AppCompatActivity() {
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration
+    ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (isInPictureInPictureMode) {
             viewBinding.closeVideoIv.visibility = View.GONE
@@ -192,8 +213,6 @@ class PiPActivity : AppCompatActivity() {
     }
 
 
-
-
     @SuppressLint("InlinedApi")
     private fun hideSystemUi() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -201,6 +220,17 @@ class PiPActivity : AppCompatActivity() {
             controller.hide(WindowInsetsCompat.Type.systemBars())
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+
+    private fun markInAppMessageAsRead() {
+        if (mUserId.isNotEmpty()) {
+            val inAppMessageHandler = InAppMessageHandler(this, mUserId)
+            inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
+            inAppMessageHandler.markIAMAsSeenLocally(mInAppMessageId)
+        } else {
+            MokLogger.log(MokLogger.LogLevel.ERROR, "User Id is null, contact mok team")
         }
     }
 }
