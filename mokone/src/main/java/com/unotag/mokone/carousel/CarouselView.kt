@@ -38,22 +38,11 @@ class CarouselView @JvmOverloads constructor(
     private var isAutoScrolling = false
 
     init {
-        getCarouselContent()
-    }
-
-    private fun getCarouselContent(
-    ) {
-        val apiCallTask = MokApiCallTask()
-        val userId = MokSDK.getUserId()
-
-        apiCallTask.performApiCall(
-            MokApiConstants.BASE_URL + MokApiConstants.URL_CAROUSEL_DATA + userId,
-            MokApiCallTask.HttpMethod.GET,
-            MokApiCallTask.MokRequestMethod.READ
-        ) { result ->
+        getCarouselContent { result ->
             handleCarouselResult(result)
         }
     }
+
 
     private fun handleCarouselResult(
         result: MokApiCallTask.ApiResult,
@@ -73,11 +62,16 @@ class CarouselView @JvmOverloads constructor(
                 }
                 reload()
             }
+
             is MokApiCallTask.ApiResult.Error -> {
                 MokLogger.log(MokLogger.LogLevel.ERROR, "Carousel api has error")
-                MokLogger.log(MokLogger.LogLevel.ERROR, "error: ${result.exception.localizedMessage}")
+                MokLogger.log(
+                    MokLogger.LogLevel.ERROR,
+                    "error: ${result.exception.localizedMessage}"
+                )
                 reload()
             }
+
             else -> {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
@@ -105,10 +99,10 @@ class CarouselView @JvmOverloads constructor(
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             linearLayout.layoutParams = layoutParams
-                // Set up the CarouselView with the provided carouselItemList
-                setupCarousel(carouselItemList)
-                // Start auto-scrolling
-                startAutoScroll()
+            // Set up the CarouselView with the provided carouselItemList
+            setupCarousel(carouselItemList)
+            // Start auto-scrolling
+            startAutoScroll()
 
         } else {
             // If the list is empty, hide the entire CarouselView
@@ -183,5 +177,18 @@ class CarouselView @JvmOverloads constructor(
     fun stopAutoScroll() {
         coroutineScope.cancel()
         isAutoScrolling = false
+    }
+}
+
+fun getCarouselContent(callback: ((MokApiCallTask.ApiResult) -> Unit)?) {
+    val apiCallTask = MokApiCallTask()
+    val userId = MokSDK.getUserId()
+
+    apiCallTask.performApiCall(
+        MokApiConstants.BASE_URL + MokApiConstants.URL_CAROUSEL_DATA + userId,
+        MokApiCallTask.HttpMethod.GET,
+        MokApiCallTask.MokRequestMethod.READ
+    ) { result ->
+        callback?.invoke(result)
     }
 }

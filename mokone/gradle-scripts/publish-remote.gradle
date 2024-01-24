@@ -21,7 +21,7 @@ artifacts {
 }
 
 group = 'com.unotags'
-version = '0.0.30'
+version = '0.0.32'
 
 afterEvaluate {
     publishing {
@@ -59,7 +59,6 @@ afterEvaluate {
                             email = 'sohelyadav@gmail.com'
                         }
                     }
-
                     // Version control info
                     scm {
                         connection = 'scm:git:https://github.com/unotag/mok-sdk-android.git'
@@ -67,12 +66,10 @@ afterEvaluate {
                         url = 'https://github.com/unotag/mok-sdk-android'
                     }
                 }
-
             }
         }
     }
 }
-
 
 
 signing {

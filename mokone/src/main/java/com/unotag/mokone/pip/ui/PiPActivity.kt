@@ -124,8 +124,8 @@ class PiPActivity : AppCompatActivity() {
 
                 val mediaItem = MediaItem.Builder()
                     //.setUri("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
-                    .setUri("https://assets.mixkit.co/videos/preview/mixkit-girls-leaving-easter-eggs-in-baskets-48597-large.mp4")
-                    //.setUri(mVideoUrl)
+                   // .setUri("https://assets.mixkit.co/videos/preview/mixkit-girls-leaving-easter-eggs-in-baskets-48597-large.mp4")
+                    .setUri(mVideoUrl)
                     .setMimeType(MimeTypes.APPLICATION_MP4)
                     .build()
 
