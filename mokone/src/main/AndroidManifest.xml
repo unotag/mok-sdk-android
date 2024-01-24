@@ -9,7 +9,8 @@
 
     <application>
         <activity
-            android:name=".carousel.CarouselActivity"
+            android:name=".webView.WebViewActivity"
+            android:theme="@style/FullScreenWebViewTheme"
             android:exported="false" />
         <activity
             android:name=".pip.ui.PiPActivity"
