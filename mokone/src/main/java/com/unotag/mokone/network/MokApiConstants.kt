@@ -12,5 +12,6 @@ class MokApiConstants {
         const val URL_IN_APP_MESSAGE_DATA = "/in_app_operation_data/"
         const val URL_PENDING_IN_APP_MESSAGE = "/pending-popups/"
         const val URL_MARK_READ_IN_APP_MESSAGE = "/mark_read_in_app/"
+        const val URL_CAROUSEL_DATA = "/caraousel-data/"
     }
 }

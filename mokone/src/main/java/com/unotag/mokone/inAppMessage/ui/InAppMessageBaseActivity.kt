@@ -17,7 +17,7 @@ enum class MessageType {
     UNKNOWN
 }
 
-class InAppMessageBaseActivity() : AppCompatActivity(), IAMTextViewBottomSheetDismissListener,
+class InAppMessageBaseActivity : AppCompatActivity(), IAMTextViewBottomSheetDismissListener,
     IAMImageViewBottomSheetDismissListener, IAMWebViewBottomSheetDismissListener,
 FullScreenWebViewClosedListener {
 
@@ -48,8 +48,7 @@ FullScreenWebViewClosedListener {
         val hasRawHtmlContent: Boolean = !inAppMessageItem.jsonData?.html.isNullOrEmpty()
         val hasTextContent: Boolean = !inAppMessageItem.jsonData?.title.isNullOrEmpty()
         val hasImageContent: Boolean = !inAppMessageItem.jsonData?.image.isNullOrEmpty()
-        val hasWebSiteContent: Boolean =
-            !inAppMessageItem.jsonData?.popupConfigs?.webUrl.isNullOrEmpty()
+        val hasWebSiteContent: Boolean = !inAppMessageItem.jsonData?.popupConfigs?.webUrl.isNullOrEmpty()
 
         val messageType = determineMessageType(
             hasRawHtmlContent,
@@ -82,11 +81,11 @@ FullScreenWebViewClosedListener {
         }
     }
 
-    fun determineMessageType(
+    private fun determineMessageType(
         hasRawHtml: Boolean,
         hasText: Boolean,
         hasImage: Boolean,
-        hasWebSite: Boolean
+        hasWebSite: Boolean,
     ): MessageType {
         return when {
             hasRawHtml -> MessageType.HTML
@@ -203,6 +202,8 @@ FullScreenWebViewClosedListener {
             iAMImageViewBottomSheetFragment.tag
         )
     }
+
+
 
     private fun launchIAMFullScreenWebViewFragment(inAppMessageItem: InAppMessageItem) {
         MokLogger.log(MokLogger.LogLevel.INFO, "IAMFullScreenWebViewFragment launched")

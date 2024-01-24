@@ -7,20 +7,20 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.unotag.mokone.R
+import com.unotag.mokone.carousel.data.CarouselContent
 
+class InfiniteRecyclerAdapter(originalList: List<CarouselContent>) : RecyclerView.Adapter<InfiniteRecyclerAdapter.InfiniteRecyclerViewHolder>() {
 
-class InfiniteRecyclerAdapter(originalList: List<CarouselItem>) : RecyclerView.Adapter<InfiniteRecyclerAdapter.InfiniteRecyclerViewHolder>() {
-
-    private val newList: List<CarouselItem> =
+    private val newList: List<CarouselContent> =
         listOf(originalList.last()) + originalList + listOf(originalList.first())
 
     class InfiniteRecyclerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        fun bind(item: CarouselItem) {
+        fun bind(item: CarouselContent) {
             val carouselImageView: ImageView = itemView.findViewById(R.id.carouselImageView)
 
             Glide.with(itemView.context)
-                .load(item.imageUrl)
+                .load(item.url)
                 .centerCrop()
                 .into(carouselImageView)
         }
@@ -49,5 +49,3 @@ class InfiniteRecyclerAdapter(originalList: List<CarouselItem>) : RecyclerView.A
     }
 
 }
-
-data class CarouselItem(val imageUrl: String)

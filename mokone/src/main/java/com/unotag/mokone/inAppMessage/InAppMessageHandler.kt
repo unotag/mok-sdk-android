@@ -11,6 +11,7 @@ import com.unotag.mokone.inAppMessage.data.InAppMessageItem
 import com.unotag.mokone.inAppMessage.ui.InAppMessageBaseActivity
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.pip.ui.PiPActivity
 import com.unotag.mokone.utils.MokLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -22,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 class InAppMessageHandler(private val context: Context, private val userId: String) {
-
 
     fun fetchIAMFromServerAndSaveToDB(
         callback: (inAppMessageData: InAppMessageData?, error: String?) -> Unit
@@ -49,9 +49,18 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                             val inAppMessageId = inAppMessage?.inAppId
                             val inAppMessageAsString = Gson().toJson(inAppMessage)
                             CoroutineScope(Dispatchers.IO).async {
-                                MokLogger.log(MokLogger.LogLevel.DEBUG, "Start async task for $inAppMessageId")
-                                saveInAppMessageInLocalDb(inAppMessageId, inAppMessageAsString).await()
-                                MokLogger.log(MokLogger.LogLevel.DEBUG, "Async task completed for $inAppMessageId")
+                                MokLogger.log(
+                                    MokLogger.LogLevel.DEBUG,
+                                    "Start async task for $inAppMessageId"
+                                )
+                                saveInAppMessageInLocalDb(
+                                    inAppMessageId,
+                                    inAppMessageAsString
+                                ).await()
+                                MokLogger.log(
+                                    MokLogger.LogLevel.DEBUG,
+                                    "Async task completed for $inAppMessageId"
+                                )
                             }
                         }
                         // Await all the deferred results
@@ -67,7 +76,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                     } catch (e: Exception) {
                         MokLogger.log(
                             MokLogger.LogLevel.DEBUG,
-                            e.localizedMessage
+                            e.localizedMessage ?: "Failed to parse the API response"
                         )
                         callback(null, "Failed to parse the API response")
                     }
@@ -149,7 +158,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
 
-     fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
+    fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
         return CoroutineScope(Dispatchers.IO).async {
             val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
@@ -189,16 +198,26 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
         }
     }
 
-    private fun launchIAMBaseActivity(inAppMessageItem: InAppMessageItem) {
-        val intent = Intent(context, InAppMessageBaseActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    private fun activityLaunchEngine(inAppMessageItem: InAppMessageItem) {
+        if (inAppMessageItem.jsonData?.popupConfigs?.videoUrl.isNullOrEmpty()) {
+            launchIAMBaseActivity(inAppMessageItem)
+        } else {
+            launchPipVideo(inAppMessageItem)
+        }
+    }
+
+    private fun launchPipVideo(inAppMessageItem: InAppMessageItem) {
+        MokLogger.log(MokLogger.LogLevel.INFO, "PIP video launched")
+        val intent = Intent(context, PiPActivity::class.java)
         intent.putExtra("in_app_message_data", inAppMessageItem)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
 
-    private fun reorderIAMBaseActivity(inAppMessageItem: InAppMessageItem) {
+
+    private fun launchIAMBaseActivity(inAppMessageItem: InAppMessageItem) {
         val intent = Intent(context, InAppMessageBaseActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.putExtra("in_app_message_data", inAppMessageItem)
         context.startActivity(intent)
     }
@@ -217,7 +236,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                                     inAppMessageEntry.inAppMessageAsString,
                                     InAppMessageItem::class.java
                                 )
-                                launchIAMBaseActivity(inAppMessageItem)
+                                activityLaunchEngine(inAppMessageItem)
                             }
                         }
                     }

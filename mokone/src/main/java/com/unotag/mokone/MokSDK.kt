@@ -2,7 +2,7 @@ package com.unotag.mokone
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
+import com.unotag.mokone.carousel.getCarouselContent
 import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.helper.ManifestReader
 import com.unotag.mokone.inAppMessage.InAppMessageHandler
@@ -11,7 +11,6 @@ import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
-import com.unotag.mokone.pip.ui.PiPActivity
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
 import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
@@ -39,7 +38,7 @@ object MokSDK {
         )
     }
 
-     val appContext: Context
+    val appContext: Context
         get() = appContextRef?.get()
             ?: throw IllegalStateException("MokSDK has not been initialized. Call getInstance() first.")
 
@@ -111,7 +110,7 @@ object MokSDK {
 //endregion
 
 
-//region UpdateUser, logEvent
+    //region UpdateUser, logEvent
     fun updateUser(
         userId: String,
         data: JSONObject?,
@@ -140,7 +139,7 @@ object MokSDK {
 
 //endregion
 
-//region In App messages
+    //region In App messages
     fun requestIAMFromServerAndShow(maxDisplayedIAMs: Int = 5) {
         val sharedPreferencesService = SharedPreferencesService(appContext)
         val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
@@ -148,7 +147,10 @@ object MokSDK {
             val inAppMessageHandler = InAppMessageHandler(appContext, userId)
             inAppMessageHandler.fetchIAMFromServerAndSaveToDB(
             ) { inAppMessageData: InAppMessageData?, errorMessage: String? ->
-                   MokLogger.log(MokLogger.LogLevel.INFO, "callback received from fetchIAMFromServerAndSaveToDB")
+                MokLogger.log(
+                    MokLogger.LogLevel.INFO,
+                    "callback received from fetchIAMFromServerAndSaveToDB"
+                )
                 inAppMessageHandler.showInAppMessages(maxDisplayedIAMs)
             }
         } else {
@@ -161,13 +163,46 @@ object MokSDK {
 
 //endregion
 
-//region Pip
-fun launchPipVideo() {
-    val intent = Intent(appContext, PiPActivity::class.java)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    appContext.startActivity(intent)
-}//region Pip
+    //region Carousel content
+    fun requestCarouselContent(callback: (JSONObject?) -> Unit) {
+        val sharedPreferencesService = SharedPreferencesService(appContext)
+        val userId = sharedPreferencesService.getString(SharedPreferencesService.USER_ID_KEY, "")
 
+        if (userId.isNotEmpty()) {
+            getCarouselContent { result ->
+                when (result) {
+                    is MokApiCallTask.ApiResult.Success -> {
+                        val response = result.response
+                        callback.invoke(response)
+                    }
+                    is MokApiCallTask.ApiResult.Error -> {
+                        MokLogger.log(MokLogger.LogLevel.ERROR, "Carousel API has an error")
+                        MokLogger.log(
+                            MokLogger.LogLevel.ERROR,
+                            "Error: ${result.exception.localizedMessage}"
+                        )
+                        callback.invoke(null)
+                    }
+                    else -> {
+                        MokLogger.log(
+                            MokLogger.LogLevel.ERROR,
+                            "Unknown error in Carousel API has occurred"
+                        )
+                        callback.invoke(null)
+                    }
+                }
+            }
+        } else {
+            MokLogger.log(
+                MokLogger.LogLevel.ERROR,
+                "User is not registered, kindly register the user with a unique CLIENT_ID"
+            )
+            callback.invoke(null)
+        }
+    }
+
+
+//endregion
 
 
     //TODO: Delete this before going live
