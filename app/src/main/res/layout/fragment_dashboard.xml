@@ -41,7 +41,7 @@
                     android:imeOptions="actionDone"
                     android:inputType="text"
                     android:maxLines="1"
-                    android:text="MOASDK_001" />
+                    tools:text="MOASDK_001" />
             </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -51,6 +51,14 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="#673AB7"
                 android:text="Update user id"
+                android:textColor="#FFF" />
+
+            <Button
+                android:id="@+id/logout_user_id_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#673AB7"
+                android:text="Logout"
                 android:textColor="#FFF" />
         </LinearLayout>
 

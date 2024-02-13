@@ -228,7 +228,7 @@ class PiPActivity : AppCompatActivity() {
         if (mUserId.isNotEmpty()) {
             val inAppMessageHandler = InAppMessageHandler(this, mUserId)
             inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
-            inAppMessageHandler.markIAMAsSeenLocally(mInAppMessageId)
+            inAppMessageHandler.deleteSeenIAMAsLocally(mInAppMessageId)
         } else {
             MokLogger.log(MokLogger.LogLevel.ERROR, "User Id is null, contact mok team")
         }

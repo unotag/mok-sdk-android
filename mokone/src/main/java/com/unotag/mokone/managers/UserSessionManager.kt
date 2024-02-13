@@ -1,6 +1,8 @@
 package com.unotag.mokone.managers
 
 import android.content.Context
+import com.unotag.mokone.MokSDK
+import com.unotag.mokone.inAppMessage.InAppMessageHandler
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
@@ -42,10 +44,12 @@ class UserSessionManager(
                 callback?.invoke(response, null)
                 updateUserFCMToken()
             }
+
             is MokApiCallTask.ApiResult.Error -> {
                 val error = result.exception
                 callback?.invoke(null, error.localizedMessage)
             }
+
             else -> {
                 callback?.invoke(null, "Something went wrong")
             }
@@ -96,8 +100,32 @@ class UserSessionManager(
         return userId
     }
 
-    fun requestLogoutUser() {
-        sharedPrefsService.clearAllPreferences()
-        MokLogger.log(MokLogger.LogLevel.INFO, "User logout performed")
+    fun requestLogoutUser(callback: (success: Boolean?) -> Unit) {
+        try {
+            val userId = getPersistenceUserId()
+
+            sharedPrefsService.clearAllPreferences()
+
+            val inAppMessageHandler = InAppMessageHandler(MokSDK.appContext, userId)
+            inAppMessageHandler.deleteAllInAppMessages { success, error ->
+                if (success == true) {
+                    MokLogger.log(MokLogger.LogLevel.INFO, "User logout performed")
+                    callback.invoke(true)
+                } else {
+                    callback.invoke(false)
+                    MokLogger.log(
+                        MokLogger.LogLevel.ERROR,
+                        "Failed to logout user $error"
+                    )
+                }
+            }
+
+        } catch (e: Exception) {
+            callback.invoke(false)
+            MokLogger.log(MokLogger.LogLevel.ERROR, "Failed to logout user ${e.localizedMessage}")
+
+        }
+
     }
+
 }

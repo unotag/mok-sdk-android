@@ -42,11 +42,8 @@ interface InAppMessageDao {
     @Query("SELECT * FROM in_app_messages WHERE isSeen = 0 LIMIT :limit")
     suspend fun getUnseenMessages(limit: Int): List<InAppMessageEntity>
 
-    @Query("UPDATE in_app_messages SET isSeen = 1 WHERE inAppMessageId = :id")
-    suspend fun markAsSeen(id: String)
-
-    @Query("UPDATE in_app_messages SET isSeen = 0")
-    suspend fun resetIsSeenToFalse()
+    @Query("DELETE FROM in_app_messages WHERE inAppMessageId = :id")
+    suspend fun deleteInAppMessage(id: String)
 
     @Query("DELETE FROM in_app_messages")
     suspend fun deleteAllInAppMessages()

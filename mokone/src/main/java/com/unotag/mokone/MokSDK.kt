@@ -2,6 +2,7 @@ package com.unotag.mokone
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import com.unotag.mokone.carousel.getCarouselContent
 import com.unotag.mokone.core.MokSDKConstants
 import com.unotag.mokone.helper.ManifestReader
@@ -11,10 +12,11 @@ import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.pushNotification.PushNotificationPermissionHandler
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
-import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
+import com.unotag.mokone.webView.WebViewActivity
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -123,8 +125,8 @@ object MokSDK {
         return userSessionManager.getPersistenceUserId()
     }
 
-    fun logoutUser() {
-        userSessionManager.requestLogoutUser()
+    fun logoutUser(callback: (success : Boolean?) -> Unit) {
+        userSessionManager.requestLogoutUser(callback)
     }
 
     fun logEvent(
@@ -203,6 +205,13 @@ object MokSDK {
 
 
 //endregion
+
+    fun openWebView(url: String){
+        val intent = Intent(appContext, WebViewActivity::class.java)
+        intent.putExtra("URL", url)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        appContext.startActivity(intent)
+    }
 
 
     //TODO: Delete this before going live
