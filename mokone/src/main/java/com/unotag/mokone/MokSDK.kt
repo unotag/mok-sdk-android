@@ -12,8 +12,8 @@ import com.unotag.mokone.managers.EventLogManager
 import com.unotag.mokone.managers.UserSessionManager
 import com.unotag.mokone.network.MokApiCallTask
 import com.unotag.mokone.network.MokApiConstants
+import com.unotag.mokone.pushNotification.PushNotificationPermissionHandler
 import com.unotag.mokone.pushNotification.fcm.MokFirebaseMessagingService
-import com.unotag.mokone.pushNotification.fcm.PushNotificationPermissionHandler
 import com.unotag.mokone.services.SharedPreferencesService
 import com.unotag.mokone.utils.MokLogger
 import com.unotag.mokone.webView.WebViewActivity
@@ -125,8 +125,8 @@ object MokSDK {
         return userSessionManager.getPersistenceUserId()
     }
 
-    fun logoutUser() {
-        userSessionManager.requestLogoutUser()
+    fun logoutUser(callback: (success : Boolean?) -> Unit) {
+        userSessionManager.requestLogoutUser(callback)
     }
 
     fun logEvent(

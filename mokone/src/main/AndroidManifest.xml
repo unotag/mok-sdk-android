@@ -9,9 +9,12 @@
 
     <application>
         <activity
-            android:name=".webView.WebViewActivity"
-            android:theme="@style/FullScreenWebViewTheme"
+            android:name=".pushNotification.call.ui.IncomingCallActivity"
             android:exported="false" />
+        <activity
+            android:name=".webView.WebViewActivity"
+            android:exported="false"
+            android:theme="@style/FullScreenWebViewTheme" />
         <activity
             android:name=".pip.ui.PiPActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"

@@ -158,21 +158,21 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
 
-    fun markIAMAsSeenLocally(inAppMessageId: String): Deferred<Unit> {
+    fun deleteSeenIAMAsLocally(inAppMessageId: String): Deferred<Unit> {
         return CoroutineScope(Dispatchers.IO).async {
             val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
 
             try {
                 val inAppMessageDao = db.inAppMessageDao()
-                inAppMessageDao.markAsSeen(inAppMessageId)
+                inAppMessageDao.deleteInAppMessage(inAppMessageId)
                 MokLogger.log(
                     MokLogger.LogLevel.DEBUG,
-                    "In-App Message mark as read successfully in local"
+                    "IAM Message deleted from local successfully"
                 )
             } catch (e: Exception) {
                 MokLogger.log(
                     MokLogger.LogLevel.ERROR,
-                    "Failed to mark in-app message as seen in the local database: ${e.message}"
+                    "Failed to delete IAM in local database: ${e.message}"
                 )
             } finally {
                 //db.close()
@@ -251,7 +251,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
     }
 
 
-    fun deleteAllInAppMessages(callback: ((success: String?, error: String?) -> Unit)?) {
+    fun deleteAllInAppMessages(callback: ((success: Boolean?, error: String?) -> Unit)?) {
         val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
         try {
             CoroutineScope(Dispatchers.IO).launch {
@@ -264,38 +264,14 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
                     )
                 }
             }
+            callback?.invoke(true, null)
         } catch (e: Exception) {
+            callback?.invoke(false, e.localizedMessage)
             MokLogger.log(
                 MokLogger.LogLevel.ERROR, "Error deleting all in-app messages: ${e.message}"
             )
         } finally {
-            db.close()
-        }
-    }
-
-    fun resetIsSeenToUnSeen(callback: ((success: String?, error: String?) -> Unit)?) {
-        val db = Room.databaseBuilder(context, MokDb::class.java, "mok-database").build()
-        try {
-            CoroutineScope(Dispatchers.IO).launch {
-                val inAppMessageDao = db.inAppMessageDao()
-                inAppMessageDao.resetIsSeenToFalse()
-                withContext(Dispatchers.Main) {
-                    MokLogger.log(
-                        MokLogger.LogLevel.INFO,
-                        "All in app messages resetIsSeenToUnSeen successfully"
-                    )
-                }
-            }
-            MokLogger.log(
-                MokLogger.LogLevel.INFO,
-                "All in app messages resetIsSeenToUnSeen successfully"
-            )
-        } catch (e: Exception) {
-            MokLogger.log(
-                MokLogger.LogLevel.ERROR, "Error resetting isSeen to unSeen: ${e.message}"
-            )
-        } finally {
-            db.close()
+           // db.close()
         }
     }
 
@@ -315,7 +291,7 @@ class InAppMessageHandler(private val context: Context, private val userId: Stri
             MokLogger.log(MokLogger.LogLevel.ERROR, "Error getting IAM count: ${e.message}")
             callback?.invoke(null, e.localizedMessage)
         } finally {
-            db.close()
+           // db.close()
         }
     }
 

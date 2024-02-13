@@ -45,6 +45,10 @@ class DashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val activeUser = MokSDK.getUserId()
+
+        binding.userNameEt.setText(activeUser)
+
         binding.notificationPermissionBtn.setOnClickListener {
             MokSDK.requestNotificationPermission(mActivity)
         }
@@ -73,9 +77,26 @@ class DashboardFragment : Fragment() {
         binding.updateUserIdBtn.setOnClickListener {
             val userId = binding.userNameEt.text
             if (!userId.isNullOrBlank()) {
+                MokSDK.logoutUser {
+                    if (it != null && it) {
+                        showToast("User logged out successfully")
+                    } else {
+                        showToast("Failed to log out user")
+                    }
+                }
                 updateUser(userId.toString());
             } else {
                 showToast("User ID cannot be blank")
+            }
+        }
+
+        binding.logoutUserIdBtn.setOnClickListener {
+            MokSDK.logoutUser {
+                if (it != null && it) {
+                    showToast("User logged out successfully")
+                } else {
+                    showToast("Failed to log out user")
+                }
             }
         }
 
@@ -90,7 +111,7 @@ class DashboardFragment : Fragment() {
         }
 
         binding.showInAppMsgBtn.setOnClickListener {
-           // mMokSDK.readSavedInAppMessage()
+            // mMokSDK.readSavedInAppMessage()
         }
 
         binding.deleteInAppMsgBtn.setOnClickListener {
@@ -98,12 +119,12 @@ class DashboardFragment : Fragment() {
         }
 
         binding.resetInAppMsgSeenStatusBtn.setOnClickListener {
-           // mMokSDK.resetIsSeenToUnSeen()
+            // mMokSDK.resetIsSeenToUnSeen()
         }
 
         binding.fetchInAppMsgBtn.setOnClickListener {
             val userId = binding.userNameEt.text
-            if (!userId.isNullOrBlank() ) {
+            if (!userId.isNullOrBlank()) {
                 fetchInAppMessageData();
             } else {
                 showToast("User ID or Event name cannot be blank")
@@ -114,7 +135,7 @@ class DashboardFragment : Fragment() {
     private suspend fun setIAMCountToTextView() {
         //val count = mMokSDK.getIAMCount()
         withContext(Dispatchers.Main) {
-           // binding.iamCountTv.text = count
+            // binding.iamCountTv.text = count
         }
     }
 
@@ -179,7 +200,7 @@ class DashboardFragment : Fragment() {
             }
         } else {
             // Handle the case when params is empty (null or "")
-            MokSDK.logEvent(userId,eventName) { success, errorMessage ->
+            MokSDK.logEvent(userId, eventName) { success, errorMessage ->
                 if (success != null) {
                     MokLogger.log(MokLogger.LogLevel.DEBUG, "update user result : $success")
                 } else {

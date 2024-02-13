@@ -80,7 +80,7 @@ FullScreenWebViewClosedListener {
             }
         }
     }
-
+//f, t,f,t
     private fun determineMessageType(
         hasRawHtml: Boolean,
         hasText: Boolean,
@@ -99,11 +99,13 @@ FullScreenWebViewClosedListener {
     private fun iAMWebViewTypeDecisionEngine(
         inAppMessageItem: InAppMessageItem,
     ) {
-        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+        val type = inAppMessageItem.jsonData?.popupConfigs?.templateType
+        MokLogger.log(MokLogger.LogLevel.DEBUG, "iAMWebViewTypeDecisionEngine type : $type")
+        when (type) {
             "normal" -> launchIAMWebViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMWebViewBottomSheet(inAppMessageItem)
-            "full_page" -> {}
-            "pip_video" -> {}
+            //"full_page" -> {}
+            //"pip_video" -> {}
             else -> launchIAMWebViewDialog(inAppMessageItem)
         }
     }
@@ -111,11 +113,13 @@ FullScreenWebViewClosedListener {
     private fun iAMTextViewTypeDecisionEngine(
         inAppMessageItem: InAppMessageItem,
     ) {
-        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+        val type = inAppMessageItem.jsonData?.popupConfigs?.templateType
+        MokLogger.log(MokLogger.LogLevel.DEBUG, "iAMTextViewTypeDecisionEngine type : $type")
+        when (type) {
             "normal" -> launchIAMTextViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMTextViewBottomSheet(inAppMessageItem)
-            "full_page" -> {}
-            "pip_video" -> {}
+            //"full_page" -> {}
+            //"pip_video" -> {}
             else -> launchIAMTextViewDialog(inAppMessageItem)
         }
     }
@@ -123,11 +127,13 @@ FullScreenWebViewClosedListener {
     private fun iAMImageViewTypeDecisionEngine(
         inAppMessageItem: InAppMessageItem,
     ) {
-        when (inAppMessageItem.jsonData?.popupConfigs?.templateType) {
+        val type = inAppMessageItem.jsonData?.popupConfigs?.templateType
+        MokLogger.log(MokLogger.LogLevel.DEBUG, "iAMImageViewTypeDecisionEngine type : $type")
+        when (type) {
             "normal" -> launchIAMImageViewDialog(inAppMessageItem)
             "bottom_sheet" -> launchIAMImageViewBottomSheet(inAppMessageItem)
-            "full_page" -> {}
-            "pip_video" -> {}
+            //"full_page" -> {}
+           // "pip_video" -> {}
             else -> launchIAMTextViewBottomSheet(inAppMessageItem)
         }
     }
@@ -224,7 +230,7 @@ FullScreenWebViewClosedListener {
         if (mUserId.isNotEmpty()) {
             val inAppMessageHandler = InAppMessageHandler(this, mUserId)
             inAppMessageHandler.markIAMReadInLocalAndServer(mInAppMessageId, null)
-            inAppMessageHandler.markIAMAsSeenLocally(mInAppMessageId)
+            inAppMessageHandler.deleteSeenIAMAsLocally(mInAppMessageId)
         } else {
             MokLogger.log(MokLogger.LogLevel.ERROR, "User Id is null, contact mok team")
         }

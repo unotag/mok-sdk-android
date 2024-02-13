@@ -1,4 +1,4 @@
-package com.unotag.mokone.pushNotification.fcm
+package com.unotag.mokone.pushNotification
 
 import android.app.Activity
 import android.content.Context
